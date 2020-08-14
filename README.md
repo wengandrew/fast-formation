@@ -9,6 +9,9 @@ Requires presence of raw files in `data/`, which is not stored in the repo.
 To view notebooks, enter the following command in your terminal:
 
 ```
-ipython notebook [notebook_name.ipynb]
+ipython notebook process_formation_data.ipynb
+ipython notebook process_cycling_data.ipynb
 ```
+
+Use as read-only for now, since source data isn't available. Eventually I'd like to refactor this into .py files.
 
