@@ -15,7 +15,7 @@ function process_voltage_curves()
     
     % Initialize plot
 
-    fh = figure();
+    fh_summary = figure();
     
     ax1 = subplot(2, 2, 1);
     ylabel('y_{100}')
@@ -128,7 +128,7 @@ function process_voltage_curves()
     
     linkaxes([ax1, ax2, ax3, ax4], 'x')
     
-    saveas(fh, sprintf('%s/esoh_features_all_cells.png', output_path))
+    saveas(fh_summary, sprintf('%s/esoh_features_all_cells.png', output_path))
     
     
 end
