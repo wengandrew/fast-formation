@@ -4,22 +4,26 @@ function [Xt, RMSE_V, RMSE_E, Q, Vt, Qd, Et, dVdQ] = diagnostics_Qs(...
     %
     % Args:
     ​%   Q_data:  charge capacity
-    %   Vt_data: voltage data Qf_data:  expansion data from DAQ (LVDT) Dis_data:
-    %   displacement data from DAQ (LVDT) Xi: initial guess (5 x 1) i: iteration
-    %   for different files Cpi: param related to expansion model and for i > 1
-    %   Cni: param related to expansion model and for i > 1 n: is a selector for
-    %   the optimization 1. Voltage only 2. Expansion only 3. Voltage +
-    %   expansion
+    %   Vt_data: voltage data 
+    %   Qf_data: expansion data from DAQ (LVDT) 
+    %   Dis_data: displacement data from DAQ (LVDT) 
+    %   Xi: initial guess (5 x 1) 
+    %   i: iteration for different files 
+    %   Cpi: param related to expansion model and for i > 1
+    %   Cni: param related to expansion model and for i > 1 
+    %   n: is a selector for the optimization 
+    %      1. Voltage only 
+    %      2. Expansion only 
+    %      3. Voltage + expansion
     %
-    % Outputs: Xt: output vector of parameters (5 x 1)
-    %
+    % Outputs: 
+    %   Xt: output vector of parameters (5 x 1)
     %
     % For Battery Formation data, there is no Comment out everything related to
     % Qf_data, Dis_data
     %
     % LVDT: fixed top and bottom places; measure displacement of middle plate
     % using a contact sensor to measure thickness change
-    %
 
     % Negative electrode during lithiation, 25C
     % Graphite
