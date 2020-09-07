@@ -1,6 +1,9 @@
 function process_voltage_curves()
     % Takes in voltage data and run it through the eSOH model to get POS,
     % NEG, and LLI losses
+    
+    % TODO: try to plot U_p and U_n on the same basis to observe goodness
+    % of fit
 
     % Set defaults
     set(0, 'DefaultLineLineWidth', 1.5)
@@ -53,7 +56,7 @@ function process_voltage_curves()
             Xt_matrix = [Xt_matrix res(i).Xt];
 
         end
-
+        
         % Sort the results by increasing cycle index
         [~, i] = sort(cyc);
         cyc = cyc(i);
@@ -91,24 +94,27 @@ function process_voltage_curves()
         % Plot the dV/dQ model vs actual
         ax_dvdq = subplot(2, 1, 2);
         cols = lines(numel(cyc));
+        offs = 0;
         for i = 1:numel(cyc)
 
-            line(raw_data{i}.charge_capacity, raw_data{i}.dvdq, ...
+            line(raw_data{i}.charge_capacity, raw_data{i}.dvdq + offs, ...
                     'LineWidth', 1.5, ...
                     'Color', cols(i, :), ...
                     'Parent', ax_dvdq)
-            line(res(i).Qd, res(i).dVdQ, ...
+            line(res(i).Qd, res(i).dVdQ + offs, ...
                 'Color', cols(i, :), ...
                 'LineStyle', '--', ...
                 'HandleVisibility', 'off', ...
                 'Parent', ax_dvdq)
-
+            
+            offs = offs + 0.1;
+            
         end
 
         grid on
         xlabel('Capacity (Ah)')
-        ylabel('dV/dQ (V/Ah)')
-        ylim([0 0.7])
+        ylabel('dV/dQ + offs (V/Ah)')
+        ylim([0 0.7 + offs])
 
         linkaxes([ax_voltage, ax_dvdq], 'x')
         
@@ -153,7 +159,7 @@ function aes = get_cellid_aesthetics(cellid)
         aes.linestyle = '--';
     end
     
-    if ismember(aes.group, {'Baseline HT', 'Microform HT'})
+    if ismember(aes.group, {'Baseline HT', 'MicroForm HT'})
         aes.color = [1 0 0];
     else
         aes.color = [0 0 1];
@@ -199,6 +205,15 @@ function result = run_esoh(tbl)
     result.Vt = Vt;
     result.Qd = Qd;
     result.dVdQ = dVdQ;  
+    
+
+    [Un, Up] = get_electrode_models();
+    
+    Vp = Up(Xt(1) + Q / Xt(2));
+    Vn = Un(Xt(3) - Q / Xt(4));
+    
+    
+    keyboard
   
 end
 
