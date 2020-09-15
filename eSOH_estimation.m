@@ -20,7 +20,7 @@ fn.Cell35 = {'diagnostic_test_cell_35_cyc_3.csv','diagnostic_test_cell_35_cyc_56
 % fn.Cell35 = {'diagnostic_test_cell_35_cyc_56.csv','diagnostic_test_cell_35_cyc_159.csv','diagnostic_test_cell_35_cyc_262.csv'};
 %%
 % Cell_num = {'Cell09','Cell11','Cell29','Cell31','Cell35'};
-Cell_num = {'Cell35'};
+Cell_num = {'Cell29'};
 cell_legend = {'BL form HT','BL form RT','Micro form RT','Micro form HT','Micro form HT'};
 color = {'*','*','*','*','*','*','*','*','*'};
 marker = '-o';
@@ -42,7 +42,8 @@ Cy_num_OCV = [3,56,159,262];
 
 Capac_OCV = [];
 % Xi = [0.03;4.5;0.83;4.5;0.005];
-Xi = [0.001;2.768464971216000;0.896080139372822;2.837676595496400;0.05];
+% Xi = [0.001;2.768464971216000;0.896080139372822;2.837676595496400;0.05];
+Xi = [0.023;2.768464971216000;0.896080139372822;2.837676595496400;0.05];
 y100 = [];
 Cp = 0;
 x100 = [];
@@ -87,7 +88,7 @@ h = legend(Cell_num);
 % set(h,'Interpreter','latex','Location','best')
 hold on
 
-% id1 = find(Voltage>3.47,1); 
+% id1 = find(Voltage>4.0,1); 
 Capac_OCV = [Capac_OCV,max(Q)];
 id1 = 1; 
 

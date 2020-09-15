@@ -9,21 +9,33 @@ function [Xt,RMSE_V,RMSE_E,Q,Vt,Qd,Et,dVdQ] = diagnostics_Qs(Q_data,Vt_data,Qf_d
 %                     -0.0145*tanh((x-0.490)/0.018)+...
 %                     -0.0800*tanh((x-1.030)/0.055); % Graphite OG
 % 
-Un = @(x) 0.08+1*exp(-75*(x+0.00))+...
+% Un = @(x) 0.08+1*exp(-75*(x+0.00))+...
+%                     -0.0120*tanh((x-0.127)/0.016)+...
+%                     -0.0118*tanh((x-0.155)/0.016)+...
+%                     -0.0035*tanh((x-0.230)/0.015)+...
+%                     -0.0095*tanh((x-0.190)/0.013)+...
+%                     -0.0145*tanh((x-0.490)/0.018)+...
+%                     -0.0800*tanh((x-1.030)/0.055); % Graphite HT
+                
+Un = @(x) 0.08+1*exp(-130*(x-0.02))+...
                     -0.0120*tanh((x-0.127)/0.016)+...
                     -0.0118*tanh((x-0.155)/0.016)+...
                     -0.0035*tanh((x-0.230)/0.015)+...
                     -0.0095*tanh((x-0.190)/0.013)+...
                     -0.0145*tanh((x-0.490)/0.018)+...
-                    -0.0800*tanh((x-1.030)/0.055); % Graphite HT
+                    -0.0800*tanh((x-1.030)/0.055); % Graphite RT
                 
 % Up = @(y)
 % 4.3452-1.6518*(y)+1.6225*(y).^2-2.0843*(y).^3+3.5146*y.^4-2.2166*y.^5-0.5623e-4*exp(109.451*(y)-100.006);
 % % NMC OG
 
+% Up_fit =@(X,y) X(1)+X(2)*(y)+X(3)*(y).^2+X(4)*(y).^3+X(5)*y.^4+X(6)*y.^5+X(7)*exp(X(8)*(y)+X(9)); % NMC
+% X_targ = [4.33593745970218;-1.39533828457540;-0.363244756326384;4.13955937087940;-4.37780665398219;1.23771708335003;0;100;-100];
+% Up = @(y) Up_fit(X_targ,y); % NMC HT
+
 Up_fit =@(X,y) X(1)+X(2)*(y)+X(3)*(y).^2+X(4)*(y).^3+X(5)*y.^4+X(6)*y.^5+X(7)*exp(X(8)*(y)+X(9)); % NMC
-X_targ = [4.33593745970218;-1.39533828457540;-0.363244756326384;4.13955937087940;-4.37780665398219;1.23771708335003;0;100;-100];
-Up = @(y) Up_fit(X_targ,y); % NMC HT
+X_targ = [4.34009327563775;-1.54462232593124;0.409055823762215;2.12073344868274;-1.82451354536166;0.0218169581321442;0;100;-100];
+Up = @(y) Up_fit(X_targ,y); % NMC RT
 
 del_n = 62e-6; % Graphite
 del_p = 67e-6; % NMC
@@ -70,8 +82,8 @@ ub = [0.1;4;1.0;4;1.0];
 
 % L = 0;
 % S = [20;1/6;1;1/6];
-% lb2 = [Xi(1)*0.9;Xi(2)*0.80;Xi(3)*0.9;Xi(4)*0.80;0.0];
-% ub2 = [Xi(1)*1.1;Xi(2)*1.00;Xi(3)*1.1;Xi(4)*1.00;0.5];
+lb2 = [Xi(1)*0.9;Xi(2)*0.80;Xi(3)*0.9;Xi(4)*0.80;0.0];
+ub2 = [Xi(1)*1.1;Xi(2)*1.00;Xi(3)*1.1;Xi(4)*1.00;0.5];
 
 
 
@@ -81,11 +93,11 @@ switch n
         nonCon = @(X) connon(X./S,4.20,3.0,max(Q_data),Up,Un);
         options = optimoptions('fmincon','Display','iter','Algorithm','sqp','OptimalityTolerance',1e-7,'MaxFunctionEvaluations',9000);
         if i == 1
-            problem = createOptimProblem('fmincon','x0',Xi.*S,'objective',fun,'lb',lb.*S,'ub',ub.*S,'nonlcon',nonCon,'options',options);
+            problem = createOptimProblem('fmincon','x0',Xi.*S,'objective',fun,'Aineq',[0,1.03,0,-1,0],'bineq',0,'lb',lb.*S,'ub',ub.*S,'nonlcon',nonCon,'options',options);
             gs = GlobalSearch;
             [Xr,fval,exitflag,output,manymins] = run(gs,problem);
         else
-            [Xr,fval,exitflag] = fmincon(fun,Xi.*S,[],[],[],[],lb.*S,ub.*S,nonCon,options);
+            [Xr,fval,exitflag] = fmincon(fun,Xi.*S,[],[],[],[],lb2.*S,ub2.*S,nonCon,options);
         end
         RMSE_V = sqrt((V(Xr./S,Q_data)-Vt_data)'*(V(Xr./S,Q_data)-Vt_data)/length(Q_data));
         RMSE_E = sqrt((arrayfun(@(Q) E(Xr./S,Q), Qf_data)-Dis_data)'*(arrayfun(@(Q) E(Xr./S,Q), Qf_data)-Dis_data)/length(Qf_data));
