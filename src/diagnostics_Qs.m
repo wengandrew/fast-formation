@@ -1,9 +1,9 @@
 function [Xt, RMSE_V, RMSE_E, Q, Vt, Qd, Et, dVdQ] = diagnostics_Qs(...
     Q_data, Vt_data, Qf_data, Dis_data, Xi, i, Cpi, Cni, n)
-    ​% Takes in charge data and returns electrode-level parameters
+    % Takes in charge data and returns electrode-level parameters
     %
     % Args:
-    ​%   Q_data:  charge capacity
+    %   Q_data:  charge capacity
     %   Vt_data: voltage data 
     %   Qf_data: expansion data from DAQ (LVDT) 
     %   Dis_data: displacement data from DAQ (LVDT) 
@@ -12,18 +12,17 @@ function [Xt, RMSE_V, RMSE_E, Q, Vt, Qd, Et, dVdQ] = diagnostics_Qs(...
     %   Cpi: param related to expansion model and for i > 1
     %   Cni: param related to expansion model and for i > 1 
     %   n: is a selector for the optimization 
-    %      1. Voltage only 
-    %      2. Expansion only 
-    %      3. Voltage + expansion
+    %   1. Voltage only 
+    %   2. Expansion only 
+    %   3. Voltage + expansion
     %
     % Outputs: 
     %   Xt: output vector of parameters (5 x 1)
     %
-    % For Battery Formation data, there is no Comment out everything related to
-    % Qf_data, Dis_data
-    %
-    % LVDT: fixed top and bottom places; measure displacement of middle plate
-    % using a contact sensor to measure thickness change
+    % For Battery Formation data, there is no strain measurements, so comment
+    % out everything related to Qf_data, Dis_data. The strain is measured using
+    % a LVDT; measure displacement of middle plate using a contact sensor to
+    % measure thickness change
 
     % Negative electrode during lithiation, 25C
     % Graphite
@@ -33,7 +32,7 @@ function [Xt, RMSE_V, RMSE_E, Q, Vt, Qd, Et, dVdQ] = diagnostics_Qs(...
         -0.0035 * tanh((x - 0.220) / 0.020) + ...
         -0.0095 * tanh((x - 0.190) / 0.013) + ...
         -0.0145 * tanh((x - 0.490) / 0.018) + ...
-        -0.0800 * tanh((x - 1.030) / 0.055); 
+        -0.0800 * tanh((x - 1.030) / 0.055);
 
     % Positive electrode during delithiation, 25C
     Up = @(y) 4.3452 - 1.6518 * (y) + 1.6225 * (y).^2 - ...
@@ -43,7 +42,7 @@ function [Xt, RMSE_V, RMSE_E, Q, Vt, Qd, Et, dVdQ] = diagnostics_Qs(...
     del_n = 62e-6; % Graphite
     del_p = 67e-6; % NMC
     ​
-    es_n = 0.610; %Active material ration   Graphite
+    es_n = 0.610; % Active material ration   Graphite
     es_p = 0.451;
 
     % Flip the vectors so that the "charge" becomes a "discharge"
