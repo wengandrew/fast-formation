@@ -1,253 +1,251 @@
 function process_voltage_curves()
     % Takes in voltage data and run it through the eSOH model to get POS,
     % NEG, and LLI losses
-    
-    % TODO: try to plot U_p and U_n on the same basis to observe goodness
-    % of fit
 
-    % Set defaults
-    set(0, 'DefaultLineLineWidth', 1.5)
-    set(0, 'DefaultAxesFontSize', 20)
-    set(0, 'DefaultFigureColor', [1 1 1])
-    set(0, 'DefaultFigurePosition', [400 250 900 750])
-    
+    set_default_plot_settings();
+
+    % Set paths
     input_path = 'output/2020-08-microformation-voltage-curves';
     output_path = 'output/2020-08-microformation-esoh-fits';
-    
-    cellids = 1:1:40;
-    
-    % Initialize plot
+    file_path = 'output/2020-08-microformation-voltage-curves';
 
-    fh_summary = figure();
-    
-    ax1 = subplot(2, 2, 1);
-    ylabel('y_{100}')
+    cellid_array = 1:1:40;
 
-    ax2 = subplot(2, 2, 2);
-    ylabel('C_p')
+    % Initialize accumulator arrays
+    all_cellid = [];
+    all_cyc_id = [];
+    all_y100 = [];
+    all_Cp = [];
+    all_x100 = [];
+    all_Cn = [];
+    all_Qcomp = [];
+    all_RMSE_mV = [];
 
-    ax3 = subplot(2, 2, 3);
+    for jdx = 1:numel(cellid_array)
 
-    ylabel('x_{100}')
-    xlabel('Cycle Number')
-
-    ax4 = subplot(2, 2, 4);
-    ylabel('C_n')
-    xlabel('Cycle Number')
-
-    
-    for i = 1:numel(cellids)
-        
-        cellid = cellids(i);
+        cellid = cellid_array(jdx);
         regex = sprintf('diagnostic_test_cell_%g_', cellid);
-
         file_list = find_files(input_path, regex);
+        cell_config = get_cellid_config(cellid);
 
-        % Loop over and plot the results
+        for idx = 1:numel(file_list)
 
-        % Initialize (5 x n) matrix holding results for each of the n cycles
-        Xt_matrix = [];
-        for i = 1:numel(file_list)
+            input_filename = file_list{idx};
 
-            raw_data{i} = readtable(file_list{i});
-            cyc(i) = parse_cycle_index_from_filename(file_list{i});
-            res(i) = run_esoh(raw_data{i});
+            cyc_id = parse_cycle_index_from_filename(input_filename);
 
-            Xt_matrix = [Xt_matrix res(i).Xt];
+            output_filename = sprintf('cell_%g_cyc_%g.png', cellid, ...
+                                cyc_id);
 
-        end
-        
-        % Sort the results by increasing cycle index
-        [~, i] = sort(cyc);
-        cyc = cyc(i);
-        res = res(i);
-        raw_data = raw_data(i);
-        Xt_matrix = Xt_matrix(:, i);
+            raw_data = readtable(input_filename);
+            res = run_esoh(raw_data, cell_config.electrode_model);
 
-        % Plot the voltage curve fits
-        fh = figure();
+            fh = figure();
 
-        ax_voltage = subplot(2, 1, 1);
-        cols = lines(numel(cyc));
-        for i = 1:numel(cyc)
+            ax1 = subplot(211);
+            line(raw_data.charge_capacity, raw_data.voltage, 'Color', 'k')
+            line(res.ful.Q, res.ful.V, 'Color', 'k', 'LineStyle', '--')
+            line(res.pos.Q, res.pos.V, 'Color', 'b', 'LineStyle', '--')
+            line(res.neg.Q, res.neg.V, 'Color', 'r', 'LineStyle', '--')
+            xlabel('Capacity (Ah)')
+            ylabel('Voltage (V)')
+            xlim([-1 3])
+            title({sprintf('cell %g (%s), cycle %g', ...
+                cellid, cell_config.group, cyc_id), ...
+                soh_parameters_to_string(res.Xt), ...
+                sprintf('RMSE = %.1f mV', res.RMSE_mV)})
 
-            line(raw_data{i}.charge_capacity, raw_data{i}.voltage, ...
-                    'LineWidth', 1.5, ...
-                    'Color', cols(i, :), ...
-                    'DisplayName', sprintf('Cycle %g, RMSE = %.3f', cyc(i), res(i).RMSE_V), ...
-                    'Parent', ax_voltage)
-            line(res(i).Q, res(i).Vt, ...
-                'Color', cols(i, :), ...
-                'LineStyle', '--', ...
-                'HandleVisibility', 'off', ...
-                'Parent', ax_voltage)
+            ax2 = subplot(212);
+            line(raw_data.charge_capacity, raw_data.dvdq, 'Color', 'k')
+            line(res.ful.Q, res.ful.dVdQ, 'Color', 'k', 'LineStyle', '--')
+            line(res.pos.Q, res.pos.dVdQ, 'Color', 'b', 'LineStyle', '--')
+            line(res.neg.Q, res.neg.dVdQ, 'Color', 'r', 'LineStyle', '--')
+            ylim([0 0.5])
+            xlabel('Capacity (Ah)')
+            ylabel('dV/dQ')
 
-        end
+            linkaxes([ax1 ax2], 'x')
 
-        grid on
-        lh = legend('show'); set(lh, 'Location', 'Best')
-        xlabel('Capacity (Ah)')
-        ylabel('Voltage (V)')
-        ylim([3, 4.2])
-        title(sprintf('Cell %g', cellid))
+            saveas(fh, sprintf('%s/%s', output_path, output_filename))
+            close(fh)
 
-        % Plot the dV/dQ model vs actual
-        ax_dvdq = subplot(2, 1, 2);
-        cols = lines(numel(cyc));
-        offs = 0;
-        for i = 1:numel(cyc)
+            % Accumulate summary results
+            all_cellid = [all_cellid ; cellid];
+            all_cyc_id = [all_cyc_id ; cyc_id];
+            all_y100 = [all_y100 ; res.Xt(1)];
+            all_Cp = [all_Cp ; res.Xt(2)];
+            all_x100 = [all_x100 ; res.Xt(3)];
+            all_Cn = [all_Cn ; res.Xt(4)];
+            all_Qcomp = [all_Qcomp ; res.Xt(5)];
+            all_RMSE_mV = [all_RMSE_mV ; res.RMSE_mV];
 
-            line(raw_data{i}.charge_capacity, raw_data{i}.dvdq + offs, ...
-                    'LineWidth', 1.5, ...
-                    'Color', cols(i, :), ...
-                    'Parent', ax_dvdq)
-            line(res(i).Qd, res(i).dVdQ + offs, ...
-                'Color', cols(i, :), ...
-                'LineStyle', '--', ...
-                'HandleVisibility', 'off', ...
-                'Parent', ax_dvdq)
-            
-            offs = offs + 0.1;
-            
-        end
+        end % loop over cycle index
 
-        grid on
-        xlabel('Capacity (Ah)')
-        ylabel('dV/dQ + offs (V/Ah)')
-        ylim([0 0.7 + offs])
-
-        linkaxes([ax_voltage, ax_dvdq], 'x')
-        
-        saveas(fh, sprintf('%s/esoh_fits_cell_%g.png', output_path, cellid))
-        close(fh)
-
-        % Append to the eSOH metrics plot
-        
-        aes = get_cellid_aesthetics(cellid);
-        
-        line(cyc, Xt_matrix(1, :), 'Marker', 'o', 'Parent', ax1, 'Color', aes.color, 'MarkerFaceColor', aes.color, 'LineStyle', aes.linestyle)
-        line(cyc, Xt_matrix(2, :), 'Marker', 'o', 'Parent', ax2, 'Color', aes.color, 'MarkerFaceColor', aes.color, 'LineStyle', aes.linestyle)
-        line(cyc, Xt_matrix(3, :), 'Marker', 'o', 'Parent', ax3, 'Color', aes.color, 'MarkerFaceColor', aes.color, 'LineStyle', aes.linestyle)
-        line(cyc, Xt_matrix(4, :), 'Marker', 'o', 'Parent', ax4, 'Color', aes.color, 'MarkerFaceColor', aes.color, 'LineStyle', aes.linestyle)
-        
     end % loop over cellids
-    
-    linkaxes([ax1, ax2, ax3, ax4], 'x')
-    
-    saveas(fh_summary, sprintf('%s/esoh_features_all_cells.png', output_path))
-    
-    
-end
 
-function aes = get_cellid_aesthetics(cellid)
-    % Returns a struct containing plotting options which depend on what
-    % test set the cellid belongs to
-    
-    if ismember(cellid, [1, 10, 2, 3, 4, 5, 6, 7, 8, 9])
-        aes.group = 'Baseline HT';
-    elseif ismember(cellid, [11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-        aes.group = 'Baseline RT';
-    elseif ismember(cellid, [31, 32, 33, 34, 35, 36, 37, 38, 39, 40])
-        aes.group = 'MicroForm HT';
-    elseif ismember(cellid, [21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
-        aes.group = 'MicroForm RT';
-    end
-    
-    if ismember(aes.group, {'Baseline HT', 'Baseline RT'})
-        aes.linestyle = '-';
-    else
-        aes.linestyle = '--';
-    end
-    
-    if ismember(aes.group, {'Baseline HT', 'MicroForm HT'})
-        aes.color = [1 0 0];
-    else
-        aes.color = [0 0 1];
-    end
+    % Aggregate and export results in a table
+    results_table = table(all_cellid, all_cyc_id, ...
+         all_y100, all_Cp, all_x100, ...
+         all_Cn, all_Qcomp, all_RMSE_mV, ...
+         'VariableNames', {'cellid', 'cycle_number', 'y100', 'Cp', ...
+         'x100', 'Cn', 'Qcomp', 'RMSE_mV'});
+
+    writetable(results_table, 'summary_esoh_table.csv');
+
+    plot_summary_esoh_table();
 
 end
 
 function cyc_index = parse_cycle_index_from_filename(file_fullpath)
 
     [~, filename, ~] = fileparts(file_fullpath);
-    
     parts = strsplit(filename, '_');
-    
     cyc_index = str2num(parts{6});
-   
+
 
 end
 
-function result = run_esoh(tbl)
-    % Run electrode-level SOH algorithm on a dataset
+function result = soh_parameters_to_string(Xt)
+    % Return a string representation of Xt
+
+    result = sprintf(['y_{100} = %.2f, C_p = %.2f Ah, '...
+                      'x_{100} = %.2f, C_n = %.2f Ah, '...
+                      'Q_{comp} = %.2f Ah'], ...
+        Xt(1), Xt(2), Xt(3), Xt(4), Xt(5))
+
+end
+
+function result = run_esoh(tbl, type)
+    % Run electrode-level SOH algorithm on a dataset.
+    % Also do some post-processing.
     %
     % Args
     %   tbl: the dataset as a MATLAB table
+    %   type: electrode model type ('original', 'formation_rt',
+    %   'formation_ht'
     %
     % Returns
     %   result: a struct holding results
-    
+
     voltage = tbl.voltage;
     capacity = tbl.charge_capacity;
-    
-    [Xt, RMSE_V, Q, Vt, Qd, dVdQ] = ...
-        diagnostics_Qs_voltage_only(capacity, voltage);
-    
-    % Revert to a charge curve
-    Q = fliplr(Q); 
-    Qd = fliplr(Qd);
-    dVdQ = abs(dVdQ);
-    
+
+    [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
+        diagnostics_Qs_voltage_only(capacity, voltage, type);
+
+    [pos_pot, pos_pot_dvdq] = calculate_pos(ful_cap, Xt, type);
+    [pos_pot, pos_cap, pos_pot_dvdq] = expand_pos(pos_pot, ful_cap, Xt, type);
+
+    [neg_pot, neg_pot_dvdq] = calculate_neg(ful_cap, Xt, type);
+    [neg_pot, neg_cap, neg_pot_dvdq] = expand_neg(neg_pot, ful_cap, Xt, type);
+
     % Package results
     result.Xt = Xt;
-    result.RMSE_V = RMSE_V;
-    result.Q = Q;
-    result.Vt = Vt;
-    result.Qd = Qd;
-    result.dVdQ = dVdQ;  
-    
+    result.RMSE_mV = RMSE_V*1000;
+    result.ful.Q = ful_cap;
+    result.ful.V = ful_pot;
+    result.ful.dVdQ = abs(ful_dvdq_pot);
+    result.pos.Q = pos_cap;
+    result.pos.V = pos_pot;
+    result.pos.dVdQ = abs(pos_pot_dvdq);
+    result.neg.Q = neg_cap;
+    result.neg.V = neg_pot;
+    result.neg.dVdQ = abs(neg_pot_dvdq);
 
-    [Un, Up] = get_electrode_models();
-    
-    Vp = Up(Xt(1) + Q / Xt(2));
-    Vn = Un(Xt(3) - Q / Xt(4));
-    
-    
-    keyboard
-  
 end
 
-function file_list = find_files(path, regex)
-    % Returns files in directory matching regular expression
-    %
-    % Args:
-    %  path: directory name
-    %  regex: regular expression
-    %
-    % Returns:
-    %  file_list: cell array of strings
-    
-    listing = dir(path);
-    
-    file_list = {};
-    
-    for i = 1:numel(listing)
-       
-        curr_listing = listing(i);
-        
-        % Skip directories
-        if curr_listing.isdir == 1
-            continue
-        end
-        
-        % Skip files that do not match regular expression
-        if isempty(regexpi(curr_listing.name, regex))
-            continue
-        end
-        
-        file_full_path = [curr_listing.folder '/' curr_listing.name];
-        file_list = [file_list; file_full_path];
-        
+function [pot, dvdq] = calculate_neg(cap, Xt, type)
+    % Returns a negative potential vector in the charge direction
+
+    [neg_func, ~] = get_electrode_models(type);
+
+    pot = neg_func(Xt(3) - cap / Xt(4));
+
+    dVdQn = gradient(pot) ./ gradient(cap);
+
+    % Convert curve from discharge to charge
+    pot = fliplr(pot);
+    dvdq = fliplr(dVdQn);
+
+end
+
+function [pot, dvdq] = calculate_pos(cap, Xt, type)
+    % Returns a positive potential vector in the charge direction
+
+    [~, pos_func] = get_electrode_models(type);
+
+    pot = pos_func(Xt(1) + cap / Xt(2));
+
+    dvdq = gradient(pot) ./ gradient(cap);
+
+    % Convert curve from discharge to charge
+    pot = fliplr(pot);
+    dvdq = fliplr(dvdq);
+
+end
+
+function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, type)
+    % Expands a positive potential vector given a capacity-potential curve in
+    % the charge direction
+
+    POS_MAX_VOLTAGE = 4.4;
+    POS_MIN_VOLTAGE = 2.5;
+
+    [~, pos_func] = get_electrode_models(type);
+
+    diff = cap(2) - cap(1);
+
+    min_cap = min(cap);
+    while pos_func(Xt(1) + min_cap / Xt(2)) < POS_MAX_VOLTAGE
+        min_cap = min_cap - diff;
     end
+
+    max_cap = max(cap);
+    while pos_func(Xt(1) + max_cap / Xt(2)) > POS_MIN_VOLTAGE
+        max_cap = max_cap + diff;
+    end
+
+    cap_full = min_cap:diff:max_cap;
+
+    [pot_full, pot_dvdq_full] = calculate_pos(cap_full, Xt, type);
+
+    % Translate the capacity to curve to align with orig data
+    Q1 = min(cap_full);
+    Q2 = cap_full(abs(pot_full - min(pot)) < 1e-9) - ...
+         cap_full(abs(pot_full - min(pot_full)) < 1e-9);
+    cap_full = cap_full - Q1 - Q2;
+
+end
+
+function [pot_full, cap_full, pot_dvdq_full] = expand_neg(pot, cap, Xt, type)
+    % Expand a negative potential vector given a capacity-potential curve in the
+    % charge direction
+
+    NEG_MAX_VOLTAGE = 2.0;
+    NEG_MIN_VOLTAGE = 0;
+
+    [neg_func, ~] = get_electrode_models(type);
+
+    diff = cap(2) - cap(1);
+
+    min_cap = min(cap);
+    while neg_func(Xt(3) - min_cap / Xt(4)) > NEG_MIN_VOLTAGE
+        min_cap = min_cap - diff;
+    end
+
+    max_cap = max(cap);
+    while neg_func(Xt(3) - max_cap / Xt(4)) < NEG_MAX_VOLTAGE
+        max_cap = max_cap + diff;
+    end
+
+    cap_full = min_cap:diff:max_cap;
+
+    [pot_full, pot_dvdq_full] = calculate_neg(cap_full, Xt, type);
+
+    % Translate the capacity to curve to align with orig data
+    Q1 = min(cap_full);
+    Q2 = cap_full(abs(pot_full - max(pot)) < 1e-9) - ...
+         cap_full(abs(pot_full - max(pot_full)) < 1e-9);
+    cap_full = cap_full - Q1 - Q2;
 
 end
