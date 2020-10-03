@@ -38,7 +38,42 @@ function process_voltage_curves()
                                 cyc_id);
 
             raw_data = readtable(input_filename);
-            res = run_esoh(raw_data, cell_config.electrode_model);
+            [Cn(idx), x100(idx)] = solve_using_peak_find(raw_data.charge_capacity, raw_data.voltage);
+            if idx == 1 % recalibrate the Up Un for the fresh cell
+                
+                y100(idx) = 0.023;
+                Cp(idx) = Cn(idx)*0.995;
+                [Up_modified, Un_modified] = recalibrate(raw_data.charge_capacity, raw_data.voltage, Cn(idx), x100(idx), Cp(idx), y100(idx));
+
+                type.Un_modified = Un_modified;
+                type.Up_modified = Up_modified;
+                type.x100 = x100(idx);
+                type.Cn = Cn(idx);
+%                 y0(idx) = y100(idx) + (max(Q))/Cp(idx);
+%                 x0(idx) = max(x100(idx) - (max(Q))/Cn(idx),0);
+% 
+%                 Xi = [y100(idx);Cp(idx)];
+                
+            else
+                res = run_esoh(raw_data, type);
+                
+%                 id1 = (find(Voltage>3.38,1):length(Voltage));
+%                 [Xt,RMSE_V,Q_s,Vt,Qd,dVdQ] = diagnostics_recal(Q(id1),Voltage(id1),Up_modified,Un_modified,Xi,i,Cn,x100);
+
+                y100(i) = Xt(1);
+                Cp(i) = Xt(2);
+
+                % Xt(5) = 0;
+
+                y0(i) = y100(i) + (max(Q))/Cp(i);
+                x0(i) = max(x100(i) - (max(Q))/Cn(i),0);
+
+                Xi = Xt;
+
+                RMSE_V_out(i) = RMSE_V;
+                
+                
+            end
 
             fh = figure();
 
@@ -74,9 +109,12 @@ function process_voltage_curves()
             all_cyc_id = [all_cyc_id ; cyc_id];
             all_y100 = [all_y100 ; res.Xt(1)];
             all_Cp = [all_Cp ; res.Xt(2)];
-            all_x100 = [all_x100 ; res.Xt(3)];
-            all_Cn = [all_Cn ; res.Xt(4)];
-            all_Qcomp = [all_Qcomp ; res.Xt(5)];
+%             all_x100 = [all_x100 ; res.Xt(3)];
+%             all_Cn = [all_Cn ; res.Xt(4)];
+%             all_Qcomp = [all_Qcomp ; res.Xt(5)];
+            all_x100 = [all_x100 ; x100(idx)];
+            all_Cn = [all_Cn ; Cn(idx)];
+            all_Qcomp = [all_Qcomp ; max(raw_data.charge_capacity)];
             all_RMSE_mV = [all_RMSE_mV ; res.RMSE_mV];
 
         end % loop over cycle index
@@ -130,8 +168,11 @@ function result = run_esoh(tbl, type)
     voltage = tbl.voltage;
     capacity = tbl.charge_capacity;
 
+%     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
+%         diagnostics_Qs_voltage_only(capacity, voltage, type);
+    id1 = (find(voltage>3.38,1):length(voltage));
     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
-        diagnostics_Qs_voltage_only(capacity, voltage, type);
+        diagnostics_pos_only(capacity(id1), voltage(id1), type);
 
     [pos_pot, pos_pot_dvdq] = calculate_pos(ful_cap, Xt, type);
     [pos_pot, pos_cap, pos_pot_dvdq] = expand_pos(pos_pot, ful_cap, Xt, type);
@@ -247,5 +288,17 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_neg(pot, cap, Xt, type)
     Q2 = cap_full(abs(pot_full - max(pot)) < 1e-9) - ...
          cap_full(abs(pot_full - max(pot_full)) < 1e-9);
     cap_full = cap_full - Q1 - Q2;
+
+end
+
+function [Cn, x100] = solve_using_peak_find(capacity, voltage)
+
+    Q1_REF = 0.112; % Peak 1 position based on 'original' Un
+    Q2_REF = 0.50 ; % Peak 2 position based on 'original' Un
+
+    [p1_idx, p2_idx] = find_peaks(capacity, voltage);
+
+    Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
+    x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
 
 end
