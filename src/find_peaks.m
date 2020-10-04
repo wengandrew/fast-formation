@@ -12,11 +12,24 @@ function [p1_idx, p2_idx, dvdq] = find_peaks(capacity, voltage)
     %   dvdq: dV/dQ curve used during the processing
 
     set_default_plot_settings();
+    
+    assert(is_charge_curve(capacity, voltage))
 
     dvdq = golay_filter(capacity, voltage);
 
     [p1_idx, p1_dvdq] = find_peak_1(capacity, dvdq);
     [p2_idx, p2_dvdq] = find_peak_2(capacity, dvdq);
+
+end
+
+function tf = is_charge_curve(capacity, voltage)
+    % Returns true if the inputs represent a charge curve (and not a
+    % discharge curve)
+    
+    idx_max_cap = find(capacity == max(capacity));
+    idx_min_cap = find(capacity == min(capacity));
+    
+    tf = voltage(idx_max_cap) > voltage(idx_min_cap);
 
 end
 
