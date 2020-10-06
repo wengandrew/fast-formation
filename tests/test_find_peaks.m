@@ -1,7 +1,8 @@
 function test_find_peaks()
 
     set_default_plot_settings()
-    files = load_files();
+    files = find_files('output/2020-08-microformation-voltage-curves', ...
+        'diagnostic_test');
 
     cmap = parula(numel(files));
 
@@ -37,19 +38,12 @@ function test_find_peaks()
     end
 
     xlabel('Charge Capacity (Ah)')
-    ylabel('dV/dQ (V/Ah');
+    ylabel('dV/dQ (V/Ah)');
     ylim([0 5])
 
 
 end
 
-function files = load_files()
-
-    files = find_files(...
-        'output/2020-08-microformation-voltage-curves', ...
-        'diagnostic_test');
-
-end
 
 function [capacity, voltage, dvdq] = load_data(file)
 
