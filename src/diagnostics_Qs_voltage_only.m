@@ -1,9 +1,9 @@
-function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, Vt_data, type)
+function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data, type)
     % Takes in charge data and returns electrode-level parameters
     %
     % Args:
     %   Q_data:  charge capacity
-    %   Vt_data: voltage data
+    %   V_data: voltage data
     %   type: 'original', 'formation_ht', 'formation_rt'
     %
     % Outputs:
@@ -13,7 +13,7 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, Vt_data
 
     % Flip the vectors so that the "charge" becomes a "discharge"
     % After this, Q = 0 corresponds to Vmax ~ 4.2V
-    Vt_data = flipud(Vt_data);
+    V_data = flipud(V_data);
     Q_data = flipud(max(Q_data) - Q_data);
 
     % OCV model for discharge
@@ -35,24 +35,25 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, Vt_data
     % Scaling the input params which have different units
     S = [1; 1/6; 1; 1/6; 1];
 
+    % Get neg electrode params directly using PeakFind method
+    [Cn, x100] = solve_using_peak_find(Q_data, V_data);
+
     % Initial condition
-    Xi = [0.03 ; 2.70 ; 0.88 ; 2.75 ; 0.01] .* S;
-    Xi = [0.01 ; 1.00 ; 0.88 ; 2.75 ; 0.01] .* S;
-    Xi = [0.03 ; 2.7 ; 0.5 ;  2.00 ; 0.01] .* S;
+    Xi = [0.03 ; 2.7 ; x100 ; Cn ; 0.01] .* S;
 
     % Regularization
     L = 0;
 
     % Bounds
-    lb = [0.00; 1.00; 0; 2.00; 0.0] .* S;
-    ub = [0.10; 3.00; 1; 3.00; 0.1] .* S;
+    lb = [0.00; 1.00; x100*0.99; Cn*0.99; 0.0] .* S;
+    ub = [0.10; 3.00; x100*0.99; Cn*1.01; 0.1] .* S;
 
     % V: model
     % Vt_data: data
 
     % Cost function: sum-squared error + regularization
-    fun = @(X) (V(X ./ S, Q_data) - Vt_data)' * ...
-               (V(X ./ S, Q_data) - Vt_data) + ...
+    fun = @(X) (V(X ./ S, Q_data) - V_data)' * ...
+               (V(X ./ S, Q_data) - V_data) + ...
                   L * norm((X - Xi) ./ S, 2);
 
     nonCon = @(X) connon(X ./ S, 4.20, 3.0, max(Q_data), Up, Un);
@@ -77,8 +78,8 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, Vt_data
     gs = GlobalSearch;
     [Xr, fval, exitflag, output, manymins] = run(gs, problem);
 
-    RMSE_V = sqrt((V(Xr ./ S, Q_data) - Vt_data)' * ...
-                  (V(Xr ./ S, Q_data) - Vt_data) / length(Q_data));
+    RMSE_V = sqrt((V(Xr ./ S, Q_data) - V_data)' * ...
+                  (V(Xr ./ S, Q_data) - V_data) / length(Q_data));
 
     % Revert scaling
     Xt = Xr ./ S;
@@ -113,4 +114,14 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
 
 end
 
+function [Cn, x100] = solve_using_peak_find(capacity, voltage)
 
+    Q1_REF = 0.129; % Peak 1 position based on 'original' Un
+    Q2_REF = 0.49 ; % Peak 2 position based on 'original' Un
+
+    [p1_idx, p2_idx] = find_peaks(capacity, voltage);
+
+    Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
+    x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
+
+end
