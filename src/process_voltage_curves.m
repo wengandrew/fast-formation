@@ -28,7 +28,7 @@ function process_voltage_curves()
         file_list = find_files(input_path, regex);
         cell_config = get_cellid_config(cellid);
 
-        [Un, Up] = get_electrode_models('original');
+        [Un, Up] = get_electrode_models(cell_config.electrode_model);
         
         for idx = 1:numel(file_list)
 
