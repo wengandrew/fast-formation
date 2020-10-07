@@ -15,3 +15,10 @@ ipython notebook process_cycling_data.ipynb
 
 Use as read-only for now, since source data isn't available. Eventually I'd like to refactor this into .py files.
 
+
+### Notes with Peyman, Oct 6, 2020
+
+Adjustments that Peyman is doing to get PF + recal to work:
+1. Fix Cp and y100 before passing it into recalibrate
+2. Restrict voltage to fitting data > 3.38V
+2b. Remove the min voltage constraint
