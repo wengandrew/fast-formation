@@ -1,4 +1,4 @@
-function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data, type)
+function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data, Un, Up)
     % Takes in charge data and returns electrode-level parameters
     %
     % Args:
@@ -8,8 +8,13 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     %
     % Outputs:
     %   Xt: output vector of parameters (5 x 1)
+    
+    SOLVE_USING_PEAK_FIND = false;
 
-    [Un, Up] = get_electrode_models(type);
+    % Get neg electrode params directly using PeakFind method
+    if SOLVE_USING_PEAK_FIND
+        [Cn, x100] = solve_using_peak_find(Q_data, V_data);
+    end
 
     % Flip the vectors so that the "charge" becomes a "discharge"
     % After this, Q = 0 corresponds to Vmax ~ 4.2V
@@ -35,31 +40,37 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     % Scaling the input params which have different units
     S = [1; 1/6; 1; 1/6; 1];
 
-    % Get neg electrode params directly using PeakFind method
-    [Cn, x100] = solve_using_peak_find(Q_data, V_data);
-
-    % Initial condition
-    Xi = [0.03 ; 2.7 ; x100 ; Cn ; 0.01] .* S;
+    if SOLVE_USING_PEAK_FIND
+        Xi = [0.03; 2.70; x100 ; Cn ; 0.01] .* S;
+        lb = [0.00; 1.00; x100 ; Cn ; 0.00] .* S;
+        ub = [0.10; 3.00; x100 ; Cn ; 0.10] .* S;
+    else
+        Xi = [0.03; 2.70; 0.80 ; 2.7 ; 0.01] .* S;
+        lb = [0.00; 1.00; 0.00 ; 1.0 ; 0.00] .* S;
+        ub = [0.10; 3.5; 1.00 ; 3.5 ; 0.10] .* S;
+    end
 
     % Regularization
     L = 0;
 
     % Bounds
-    lb = [0.00; 1.00; x100*0.99; Cn*0.99; 0.0] .* S;
-    ub = [0.10; 3.00; x100*0.99; Cn*1.01; 0.1] .* S;
 
     % V: model
     % Vt_data: data
 
     % Cost function: sum-squared error + regularization
-    fun = @(X) (V(X ./ S, Q_data) - V_data)' * ...
-               (V(X ./ S, Q_data) - V_data) + ...
+    idx = find(V_data > 3.38);
+    V_fit = V_data(idx);
+    Q_fit = Q_data(idx);
+
+    fun = @(X) (V(X ./ S, Q_fit) - V_fit)' * ...
+               (V(X ./ S, Q_fit) - V_fit) + ...
                   L * norm((X - Xi) ./ S, 2);
 
-    nonCon = @(X) connon(X ./ S, 4.20, 3.0, max(Q_data), Up, Un);
+    nonCon = @(X) connon(X ./ S, 4.20, 3.0, max(Q_fit), Up, Un);
 
     options = optimoptions('fmincon', ...
-                            'Display', 'iter', ...
+                            'Display', 'none', ...
                             'Algorithm', 'sqp', ...
                             'OptimalityTolerance', 1e-7, ...
                             'MaxFunctionEvaluations', 9000);
@@ -95,6 +106,7 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     Vt = fliplr(Vt);
     dVdQ = fliplr(dVdQ);
 
+
 end
 
 function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
@@ -102,12 +114,12 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
 
     % Equality constraints
 
-    % Vmin constraint
+    % Vmax constraint
     ceq(1) = Up(X(1)) - Un(X(3)) - Vmax;
 
-    % Vmax constraint
-    ceq(2) = Up(X(1) + (Qmax + X(5)) / X(2)) - ...
-             Un(X(3) - (Qmax + X(5)) / X(4)) - Vmin;
+    % Vmin constraint
+    % ceq(2) = Up(X(1) + (Qmax + X(5)) / X(2)) - ...
+    %          Un(X(3) - (Qmax + X(5)) / X(4)) - Vmin;
 
     % Inequality constraint (nothing here)
     c = [];
@@ -115,6 +127,10 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
 end
 
 function [Cn, x100] = solve_using_peak_find(capacity, voltage)
+    %
+    % Args
+    %  capacity: CHARGE capacity curve
+    %  voltage: CHARGE voltage curve
 
     Q1_REF = 0.129; % Peak 1 position based on 'original' Un
     Q2_REF = 0.49 ; % Peak 2 position based on 'original' Un
@@ -122,6 +138,7 @@ function [Cn, x100] = solve_using_peak_find(capacity, voltage)
     [p1_idx, p2_idx] = find_peaks(capacity, voltage);
 
     Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
+
     x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
 
 end
