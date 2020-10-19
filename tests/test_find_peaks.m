@@ -1,8 +1,8 @@
 function test_find_peaks()
 
     set_default_plot_settings()
-    files = find_files('output/2020-08-microformation-voltage-curves', ...
-        'diagnostic_test');
+    files = find_files('~/Google Drive File Stream/My Drive/formation/data/2020-10-diagnostic-test-c20', ...
+        'diagnostic_test_.*_charge');
 
     cmap = parula(numel(files));
 
@@ -49,8 +49,8 @@ function [capacity, voltage, dvdq] = load_data(file)
 
     tbl = readtable(file);
 
-    capacity = tbl.charge_capacity;
-    voltage = tbl.voltage;
-    dvdq = tbl.dvdq;
+    capacity = tbl.chg_capacity;
+    voltage = tbl.chg_voltage;
+    dvdq = tbl.chg_dvdq;
 
 end
