@@ -28,7 +28,7 @@ function process_voltage_curves()
         file_list = find_files(input_path, regex);
         cell_config = get_cellid_config(cellid);
 
-        [Un, Up] = get_electrode_models(cell_config.electrode_model);
+        [Un, Up] = get_electrode_models('original');
         
         for idx = 1:numel(file_list)
 
@@ -39,6 +39,10 @@ function process_voltage_curves()
             output_filename = sprintf('cell_%g_cyc_%g.png', cellid, ...
                                 cyc_id);
 
+            if cyc_id > 500
+                continue
+            end
+            
             raw_data = readtable(input_filename);
                 
             res = run_esoh(raw_data, Un, Up);
