@@ -80,7 +80,7 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, Up)
 
 end
 
-function [pot_full, cap_full, pot_dvdq_full] = expand_neg(pot, cap, Xt, Un)
+function [pot_full, cap_full_shifted, pot_dvdq_full] = expand_neg(pot, cap, Xt, Un)
     % Expand a negative potential vector given a capacity-potential curve in the
     % charge direction
 
@@ -105,9 +105,15 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_neg(pot, cap, Xt, Un)
 
     % Translate the capacity to curve to align with orig data
     Q1 = min(cap_full);
-    Q2 = cap_full(abs(pot_full - max(pot)) < 1e-9) - ...
+    
+    if max(pot) > max(pot_full)
+        % No expansion needed
+        Q2 =  0;
+    else
+        Q2 = cap_full(abs(pot_full - max(pot)) < 1e-9) - ...
          cap_full(abs(pot_full - max(pot_full)) < 1e-9);
-    cap_full = cap_full - Q1 - Q2;
+    end
+    cap_full_shifted = cap_full - Q1 - Q2;
 
 end
 
