@@ -5,7 +5,7 @@ function process_voltage_curves()
     set_default_plot_settings();
 
     % Set paths
-    input_path = 'output/2020-08-microformation-voltage-curves';
+    input_path = '~/Google Drive File Stream/My Drive/formation/data/2020-10-diagnostic-test-c20';
     output_path = 'output/2020-08-microformation-esoh-fits';
     file_path = 'output/2020-08-microformation-voltage-curves';
 
@@ -24,7 +24,7 @@ function process_voltage_curves()
     for jdx = 1:numel(cellid_array)
 
         cellid = cellid_array(jdx);
-        regex = sprintf('diagnostic_test_cell_%g_', cellid);
+        regex = sprintf('diagnostic_test_cell_%g_.*_charge', cellid);
         file_list = find_files(input_path, regex);
         cell_config = get_cellid_config(cellid);
 
@@ -50,7 +50,7 @@ function process_voltage_curves()
             fh = figure();
 
             ax1 = subplot(211); grid on; box on;
-            line(raw_data.charge_capacity, raw_data.voltage, 'Color', 'k')
+            line(raw_data.chg_capacity, raw_data.chg_voltage, 'Color', 'k')
             line(res.ful.Q, res.ful.V, 'Color', 'k', 'LineStyle', '--')
             line(res.pos.Q, res.pos.V, 'Color', 'b', 'LineStyle', '--')
             line(res.neg.Q, res.neg.V, 'Color', 'r', 'LineStyle', '--')
@@ -66,7 +66,7 @@ function process_voltage_curves()
             set(lh, 'Location', 'East', 'Color', 'w')
 
             ax2 = subplot(212); grid on; box on;
-            line(raw_data.charge_capacity, raw_data.dvdq, 'Color', 'k')
+            line(raw_data.chg_capacity, raw_data.chg_dvdq, 'Color', 'k')
             line(res.ful.Q, res.ful.dVdQ, 'Color', 'k', 'LineStyle', '--')
             line(res.pos.Q, res.pos.dVdQ, 'Color', 'b', 'LineStyle', '--')
             line(res.neg.Q, res.neg.dVdQ, 'Color', 'r', 'LineStyle', '--')

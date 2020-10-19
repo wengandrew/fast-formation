@@ -10,8 +10,8 @@ function result = run_esoh(tbl, Un, Up)
     % Returns
     %   result: a struct holding results
 
-    voltage = tbl.voltage;
-    capacity = tbl.charge_capacity;
+    voltage = tbl.chg_voltage;
+    capacity = tbl.chg_capacity;
 
     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
         diagnostics_Qs_voltage_only(capacity, voltage, Un, Up);
