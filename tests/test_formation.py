@@ -13,7 +13,7 @@ def sample_timeseries_df():
 @pytest.fixture
 def sample_formation_cell(sample_timeseries_df):
 
-    cell = FormationCell(1)
+    cell = FormationCell(11)
 
     # Two options:
     # - manually type in some data
@@ -40,12 +40,21 @@ def test_get_aging_data_cycles(sample_formation_cell):
 
     assert not df.empty
 
+def test_is_plating(sample_formation_cell):
+
+    assert sample_formation_cell.is_plating() == 1
+
+
+def test_swelling_severity(sample_formation_cell):
+
+    assert sample_formation_cell.get_swelling_severity() == 0
+
 
 def test_get_metadata(sample_formation_cell):
 
-    df = sample_formation_cell.get_metadata()
+    metadata_dict = sample_formation_cell.get_metadata()
 
-    assert not df.empty
+    assert bool(metadata_dict)
 
 
 def test_get_formation_data(sample_formation_cell):

@@ -37,7 +37,8 @@ class FormationCell:
         self._df_timeseries = pd.DataFrame()
         self._df_cycles = pd.DataFrame()
         self._df_formation = pd.DataFrame()
-        self._df_metadata = pd.DataFrame()
+
+        self._metadata_dict = dict()
 
 
     def get_metadata(self):
@@ -48,10 +49,10 @@ class FormationCell:
           A dictionary holding cell metadata
         """
 
-        if self._df_metadata.empty:
+        if not bool(self._metadata_dict):
             self._load_metadata()
 
-        return self._df_metadata
+        return self._metadata_dict
 
 
     def _load_metadata(self):
@@ -63,7 +64,59 @@ class FormationCell:
 
         df = pd.read_excel(PATH_METADATA)
 
-        self._df_metadata = df
+        df = df[df['cell_number'] == self.cellid]
+
+        self._metadata_dict = df.to_dict('records')[0]
+
+
+    def is_baseline_formation(self):
+        """
+        Return true if this cell used the fast formation protocol
+        """
+
+        df = self.get_metadata()
+
+        return df['formation_protocol'] == 'Baseline'
+
+
+    def is_plating(self):
+        """
+        Has this cell plated lithium?
+        """
+
+        df = self.get_metadata()
+
+        return df['li_plating_possibility'] == 1
+
+
+    def get_electrolyte_weight(self):
+        """
+        Return electrolyte fill weight
+        """
+
+        df = self.get_metadata()
+
+        return df['electrolyte_weight_g']
+
+
+    def get_swelling_severity(self):
+        """
+        Return swelling severity metric for this cell
+        """
+
+        df = self.get_metadata()
+
+        return df['swelling_rating']
+
+
+    def is_room_temp(self):
+        """
+        Return True if cell went through room temperature aging
+        """
+
+        df = self.get_metadata()
+
+        return df['aging_test'] == 'RT'
 
 
     def get_formation_data(self):
@@ -249,13 +302,17 @@ class FormationCell:
         stats = dict()
 
         df_first_cycle = df[df['Cycle Number'] == 1]
-        df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number'])]
 
-        stats['first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
-        stats['first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
-        stats['first_cycle_efficiency'] = stats['first_discharge_capacity_ah'] / stats['first_charge_capacity_ah']
+        if self.is_baseline_formation():
+            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number'])]
+        else:
+            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number']) - 1]
 
-        stats['final_capacity'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
+        stats['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
+        stats['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
+        stats['form_first_cycle_efficiency'] = stats['form_first_discharge_capacity_ah'] / stats['form_first_charge_capacity_ah']
+
+        stats['form_final_capacity'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
 
         return stats
 
@@ -306,10 +363,11 @@ class FormationCell:
         df = pd.Series(capacity_retention)
         capacity_retention = df.interpolate(method='linear').bfill().to_numpy()
 
-        stats['cycles_to_50_pct'] = cyc_number[np.where(capacity_retention < 0.5)[0][0]]
-        stats['cycles_to_60_pct'] = cyc_number[np.where(capacity_retention < 0.6)[0][0]]
-        stats['cycles_to_70_pct'] = cyc_number[np.where(capacity_retention < 0.7)[0][0]]
-        stats['cycles_to_80_pct'] = cyc_number[np.where(capacity_retention < 0.8)[0][0]]
+        stats['cycles_to_50_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.5)
+        stats['cycles_to_60_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.6)
+        stats['cycles_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.7)
+        stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
+
 
         stats['initial_cell_dcr_0_soc'] = hppc_stats['dcr_soc_0'][0]
         stats['initial_cell_dcr_50_soc'] = hppc_stats['dcr_soc_50'][0]
@@ -437,6 +495,10 @@ class FormationCell:
         return f'Formation Cell {self.cellid}'
 
 
+"""
+Helper Functions
+"""
+
 def export_all_c20_data():
     """
     Dumps all C/20 charge and discharge data into the current directory.
@@ -448,9 +510,32 @@ def export_all_c20_data():
         cell.export_diagnostic_c20_data()
 
 
+def find_cycles_to_target_retention(retention, cyc_number, target_retention):
+    """
+    Returns first cycle to go below target retention
+
+    Args:
+      cyc_number (integer)
+      retention (0-1), capacity retention (capacity / initial capacity)
+      target_retention (0-1)
+
+    Returns:
+      returns a cycle number (integer)
+    """
+
+    if min(retention) > target_retention:
+        return np.nan
+
+    return cyc_number[np.where(retention < target_retention)[0][0]]
+
+
+"""
+Driver code
+"""
 
 if __name__ == "__main__":
 
     cell = FormationCell(1)
+    cell.get_metadata()
     cell.get_aging_test_summary_statistics()
 
