@@ -31,4 +31,10 @@ function file_list = find_files(path, regex)
         
     end
 
+    if isempty(file_list)
+        error(['No files found in path: ''%s'' matching '...
+               'regular expression ''%s''.'], ...
+               path, regex)
+    end
+    
 end

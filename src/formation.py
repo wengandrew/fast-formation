@@ -5,7 +5,6 @@ import glob
 import numpy as np
 from matplotlib import pyplot as plt
 
-
 HOME_PATH = r'/Users/aweng/Google Drive File Stream/My Drive/formation/'
 PATH_CYCLE = HOME_PATH + 'data/2020-10-aging-test-cycles'
 PATH_TIMESERIES = HOME_PATH + 'data/2020-10-aging-test-timeseries'
@@ -170,6 +169,7 @@ class FormationCell:
         df = df[:-1]
 
         self._df_cycles = df
+
 
     def export_diagnostic_c20_data(self):
         """
@@ -452,5 +452,5 @@ def export_all_c20_data():
 if __name__ == "__main__":
 
     cell = FormationCell(1)
-    cell.get_formation_test_summary_statistics()
+    cell.get_aging_test_summary_statistics()
 

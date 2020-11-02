@@ -4,19 +4,30 @@ function plot_summary_esoh_table()
 
     set_default_plot_settings();
 
+    plot_helper('HT', tbl)
+    plot_helper('RT', tbl)
+
+end
+
+function plot_helper(plot_type, tbl)
+
     fh_summary = figure();
 
-    ax1 = subplot(3, 2, 1);
+    ax1 = subplot(3, 2, 1); grid on; box on;
+    ylim([0.03, 0.06])
     ylabel('y_{100}')
 
-    ax2 = subplot(3, 2, 2);
+    ax2 = subplot(3, 2, 2); grid on; box on;
+    ylim([2.3 3.0])
     ylabel('C_p (Ah)')
 
-    ax3 = subplot(3, 2, 3);
+    ax3 = subplot(3, 2, 3); grid on; box on;
+    ylim([0.7 1])
     ylabel('x_{100}')
     xlabel('Cycle Number')
 
-    ax4 = subplot(3, 2, 4);
+    ax4 = subplot(3, 2, 4); grid on; box on;
+    ylim([2.3, 3.0])
     ylabel('C_n (Ah)')
     xlabel('Cycle Number')
 
@@ -30,7 +41,6 @@ function plot_summary_esoh_table()
     ylabel('RMSE_{mV}')
     xlabel('Cycle Number')
 
-
     cellids = unique(tbl.cellid);
 
     for i = 1:numel(cellids)
@@ -38,11 +48,15 @@ function plot_summary_esoh_table()
         cellid = cellids(i);
         config = get_cellid_config(cellid);
 
+        if ~strcmpi(config.temperature, plot_type)
+            continue
+        end
+
         idx = find(tbl.cellid == cellid);
         this_tbl = tbl(idx, :);
 
-        idx_exclude = this_tbl.RMSE_mV > 50;
-        this_tbl(idx_exclude, :) = [];
+        % idx_exclude = this_tbl.RMSE_mV > 50;
+        % this_tbl(idx_exclude, :) = [];
 
         [~, is] = sort(this_tbl.cycle_number);
 
@@ -72,9 +86,8 @@ function plot_summary_esoh_table()
 
     end % loop over cellids
 
-    linkaxes([ax1, ax2, ax3, ax4], 'x')
+    linkaxes([ax1, ax2, ax3, ax4, ax5, ax6], 'x')
 
-    saveas(fh_summary, sprintf('esoh_features_all_cells.png'))
-
+    saveas(fh_summary, sprintf('esoh_features_all_cells_%s.png', plot_type))
 
 end

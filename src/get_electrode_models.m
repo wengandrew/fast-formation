@@ -4,6 +4,8 @@ function [Un, Up] = get_electrode_models(type)
     % Args
     %  type (str): 'original', 'formation_rt', 'formation_ht'
     %
+    %  formation_rt and formation_ht are recalibrated curves
+    %
     % Returns
     %  Un: negative electrode potential funtion Un(x)
     %  Up: positive electrode potential function Up(y)
