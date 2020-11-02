@@ -38,15 +38,18 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     % Get neg electrode params directly using PeakFind method
     [Cn, x100] = solve_using_peak_find(Q_data, V_data);
 
-    % Initial condition
-    Xi = [0.03 ; 2.7 ; x100 ; Cn ; 0.01] .* S;
+    if SOLVE_USING_PEAK_FIND
+        Xi = [0.03; 2.70; x100 ; Cn ; 0.00] .* S;
+        lb = [0.00; 1.00; x100 ; Cn ; 0.00] .* S;
+        ub = [0.10; 3.00; x100 ; Cn ; 0.10] .* S;
+    else
+        Xi = [0.03; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
+        lb = [0.00; 1.00; 0.00 ; 1.0 ; 0.00] .* S;
+        ub = [0.10; 3.5; 1.00 ; 3.5 ; 0.00] .* S;
+    end
 
     % Regularization
     L = 0;
-
-    % Bounds
-    lb = [0.00; 1.00; x100*0.99; Cn*0.99; 0.0] .* S;
-    ub = [0.10; 3.00; x100*0.99; Cn*1.01; 0.1] .* S;
 
     % V: model
     % Vt_data: data

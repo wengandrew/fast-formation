@@ -20,11 +20,13 @@ function plot_summary_esoh_table()
     ylabel('C_n (Ah)')
     xlabel('Cycle Number')
 
-    ax5 = subplot(3, 2, 5);
+    ax5 = subplot(3, 2, 5); grid on; box on;
+    ylim([0 100])
     ylabel('Q_{comp} (mAh)')
     xlabel('Cycle Number')
 
-    ax6 = subplot(3, 2, 6);
+    ax6 = subplot(3, 2, 6); grid on; box on;
+    ylim([0 200])
     ylabel('RMSE_{mV}')
     xlabel('Cycle Number')
 

@@ -5,8 +5,8 @@ function process_voltage_curves()
     set_default_plot_settings();
 
     % Set paths
-    input_path = 'output/2020-08-microformation-voltage-curves';
-    output_path = 'output/2020-08-microformation-esoh-fits';
+    input_path = '~/Google Drive File Stream/My Drive/formation/data/2020-10-diagnostic-test-c20';
+    output_path = 'output/2020-08-microformation-esoh-fits-Oct20-no-Qc';
     file_path = 'output/2020-08-microformation-voltage-curves';
 
     cellid_array = 1:1:40;
@@ -34,9 +34,13 @@ function process_voltage_curves()
 
             cyc_id = parse_cycle_index_from_filename(input_filename);
 
-            output_filename = sprintf('cell_%g_cyc_%g.png', cellid, ...
+            output_filename = sprintf('cell_%g_cyc_%g', cellid, ...
                                 cyc_id);
 
+            if cyc_id > 300
+                continue
+            end
+            
             raw_data = readtable(input_filename);
             res = run_esoh(raw_data, cell_config.electrode_model);
 
@@ -66,7 +70,8 @@ function process_voltage_curves()
 
             linkaxes([ax1 ax2], 'x')
 
-            saveas(fh, sprintf('%s/%s', output_path, output_filename))
+            saveas(fh, sprintf('%s/%s.png', output_path, output_filename))
+            saveas(fh, sprintf('%s/%s.fig', output_path, output_filename))
             close(fh)
 
             % Accumulate summary results
