@@ -13,7 +13,7 @@ def sample_timeseries_df():
 @pytest.fixture
 def sample_formation_cell(sample_timeseries_df):
 
-    cell = FormationCell(1)
+    cell = FormationCell(11)
 
     # Two options:
     # - manually type in some data
@@ -27,26 +27,39 @@ def test_initialization(sample_formation_cell):
     assert isinstance(sample_formation_cell, FormationCell)
 
 
-def test_get_aging_data_cycles(sample_formation_cell):
+def test_get_aging_data_timeseries(sample_formation_cell):
 
-    df = sample_formation_cell.get_aging_data_cycles()
-
-    # TOOD: Ask Anders:
-    #   Best style to use for importing modules
-    #   General structure for testing functions
-    #   Multiple assertions per test?
-    #   "setting up" and "tearing down" ipdb statements
-    #   Debugging in terminal vs debugging in IDE
-    #   Configuring root directory for tests (IDE vs terminal)
-    #   Testing public vs private methods
-    #   Involking ipdb.set_trace() inside another function
+    df = sample_formation_cell.get_aging_data_timeseries()
 
     assert not df.empty
 
 
-def test_get_aging_data_timeseries(sample_formation_cell):
+def test_get_aging_data_cycles(sample_formation_cell):
 
-    df = sample_formation_cell.get_aging_data_timeseries()
+    df = sample_formation_cell.get_aging_data_cycles()
+
+    assert not df.empty
+
+def test_is_plating(sample_formation_cell):
+
+    assert sample_formation_cell.is_plating() == 1
+
+
+def test_swelling_severity(sample_formation_cell):
+
+    assert sample_formation_cell.get_swelling_severity() == 0
+
+
+def test_get_metadata(sample_formation_cell):
+
+    metadata_dict = sample_formation_cell.get_metadata()
+
+    assert bool(metadata_dict)
+
+
+def test_get_formation_data(sample_formation_cell):
+
+    df = sample_formation_cell.get_formation_data()
 
     assert not df.empty
 
@@ -59,6 +72,7 @@ def test_process_diagnostic_c20_data(sample_formation_cell):
     # not empty
     # contains certain fields
     assert isinstance(results_list, list)
+
 
 def test_export_diagnostic_c20_data(sample_formation_cell):
 
@@ -79,6 +93,14 @@ def test_get_aging_test_summary_statistics(sample_formation_cell):
     stats = sample_formation_cell.get_aging_test_summary_statistics()
 
     assert stats
+
+
+def test_get_formation_test_summary_statistics(sample_formation_cell):
+
+    stats = sample_formation_cell.get_formation_test_summary_statistics()
+
+    assert stats
+
 
 def test_summarize_hppc_pulse_statistics(sample_formation_cell):
 

@@ -28,10 +28,10 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     % Intuition:
     %   if Q = 0 --> X(1) and X(3) are left
     %
-    % X(1): positive stoic at Q = 0
-    % X(2): positive electrode capacity, Cp (Ah)
-    % X(3): negative stoic at Q = 0
-    % X(4): negative electrode capacity, Cn (Ah)
+    % X(1): y100, positive stoic at Q = 0
+    % X(2): Cp,   positive electrode capacity, Cp (Ah)
+    % X(3): x100, negative stoic at Q = 0
+    % X(4): Cn,   negative electrode capacity, Cn (Ah), 
     % X(5): Q_compensation for V_min constraint, e.g. Vmin is actually 3.05V and it needs to be 3.00V
 
     % This is the voltage model
@@ -41,19 +41,17 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     S = [1; 1/6; 1; 1/6; 1];
 
     if SOLVE_USING_PEAK_FIND
-        Xi = [0.03; 2.70; x100 ; Cn ; 0.01] .* S;
-        lb = [0.00; 1.00; x100 ; Cn ; 0.00] .* S;
-        ub = [0.10; 3.00; x100 ; Cn ; 0.10] .* S;
+        Xi = [0.0335; 2.70; x100 ; Cn ; 0.00] .* S;
+        lb = [0.0335; 1.00; x100 ; Cn ; 0.00] .* S;
+        ub = [0.0335; 3.00; x100 ; Cn ; 0.10] .* S;
     else
-        Xi = [0.03; 2.70; 0.80 ; 2.7 ; 0.01] .* S;
-        lb = [0.00; 1.00; 0.00 ; 1.0 ; 0.00] .* S;
-        ub = [0.10; 3.5; 1.00 ; 3.5 ; 0.10] .* S;
+        Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
+        lb = [0.0335; 1.00; 0.00 ; 1.0 ; 0.00] .* S;
+        ub = [0.0335; 3.5; 1.00 ; 3.5 ; 0.00] .* S;
     end
 
     % Regularization
     L = 0;
-
-    % Bounds
 
     % V: model
     % Vt_data: data
@@ -115,12 +113,14 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
     % Equality constraints
 
     % Vmax constraint
-    ceq(1) = Up(X(1)) - Un(X(3)) - Vmax;
+%     ceq(1) = Up(X(1)) - Un(X(3)) - Vmax;
 
     % Vmin constraint
     % ceq(2) = Up(X(1) + (Qmax + X(5)) / X(2)) - ...
     %          Un(X(3) - (Qmax + X(5)) / X(4)) - Vmin;
 
+    ceq = [];
+    
     % Inequality constraint (nothing here)
     c = [];
 

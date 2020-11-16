@@ -3,12 +3,13 @@ import ipdb
 import pandas as pd
 import glob
 import numpy as np
+from matplotlib import pyplot as plt
 
-PATH_CYCLE = r'/Users/aweng/Google Drive File Stream/My Drive/' \
-              'formation/data/2020-10-aging-test-cycles'
-PATH_TIMESERIES = r'/Users/aweng/Google Drive File Stream/My Drive/' \
-                   'formation/data/2020-10-aging-test-timeseries'
-PATH_METADATA = []
+HOME_PATH = r'/Users/aweng/Google Drive File Stream/My Drive/formation/'
+PATH_CYCLE = HOME_PATH + 'data/2020-10-aging-test-cycles'
+PATH_TIMESERIES = HOME_PATH + 'data/2020-10-aging-test-timeseries'
+PATH_FORMATION = HOME_PATH + 'data/2020-06-formation-timeseries'
+PATH_METADATA = HOME_PATH + 'cell_tracker.xlsx'
 
 STEP_INDEX_C3_CHARGE = 7
 STEP_INDEX_C3_DISCHARGE = 10
@@ -32,12 +33,15 @@ class FormationCell:
 
         self.cellid = cellid
 
-        # Initialize these dataframes only
-        self._df_timeseries = []
-        self._df_cycles = []
+        # Initialize DataFrames
+        self._df_timeseries = pd.DataFrame()
+        self._df_cycles = pd.DataFrame()
+        self._df_formation = pd.DataFrame()
+
+        self._metadata_dict = dict()
 
 
-    def get_cell_metadata(self):
+    def get_metadata(self):
         """
         Returns metadata for this cell as a dict
 
@@ -45,10 +49,77 @@ class FormationCell:
           A dictionary holding cell metadata
         """
 
-        pass
+        if not bool(self._metadata_dict):
+            self._load_metadata()
+
+        return self._metadata_dict
 
 
-    def get_formation_data_timeseries(self):
+    def _load_metadata(self):
+        """
+        Retrieve metadata for this cell
+
+        Assigns data as object property
+        """
+
+        df = pd.read_excel(PATH_METADATA)
+
+        df = df[df['cell_number'] == self.cellid]
+
+        self._metadata_dict = df.to_dict('records')[0]
+
+
+    def is_baseline_formation(self):
+        """
+        Return true if this cell used the fast formation protocol
+        """
+
+        df = self.get_metadata()
+
+        return df['formation_protocol'] == 'Baseline'
+
+
+    def is_plating(self):
+        """
+        Has this cell plated lithium?
+        """
+
+        df = self.get_metadata()
+
+        return df['li_plating_possibility'] == 1
+
+
+    def get_electrolyte_weight(self):
+        """
+        Return electrolyte fill weight
+        """
+
+        df = self.get_metadata()
+
+        return df['electrolyte_weight_g']
+
+
+    def get_swelling_severity(self):
+        """
+        Return swelling severity metric for this cell
+        """
+
+        df = self.get_metadata()
+
+        return df['swelling_rating']
+
+
+    def is_room_temp(self):
+        """
+        Return True if cell went through room temperature aging
+        """
+
+        df = self.get_metadata()
+
+        return df['aging_test'] == 'RT'
+
+
+    def get_formation_data(self):
         """
         Retrieve data from the formation cycles
 
@@ -56,14 +127,39 @@ class FormationCell:
           A Pandas DataFrame
         """
 
-        return 0
+        if self._df_formation.empty:
+            self._load_formation_data()
+
+        return self._df_formation
+
+
+    def _load_formation_data(self):
+        """
+        Retrive data from formation test.
+
+        Assigns data as object property
+        """
+
+        regex = f'UM_Internal_0620_*_{self.cellid}.*.csv'
+
+        file = glob.glob(f'{PATH_FORMATION}/{regex}')
+
+        assert len(file) == 1, f'More than one file associated with ' \
+                               f'cell {self.cellid}'
+
+        df = pd.read_csv(file[0])
+
+        df['Cycle Number'] +=1
+
+        self._df_formation = df
+
 
     def get_aging_data_timeseries(self):
         """
         Get timeseries data with caching implementation
         """
 
-        if not self._df_timeseries:
+        if self._df_timeseries.empty:
             self._load_aging_data_timeseries()
 
         return self._df_timeseries
@@ -95,7 +191,7 @@ class FormationCell:
         Get aging data with caching implementation
         """
 
-        if self._df_cycles == []:
+        if self._df_cycles.empty:
             self._load_aging_data_cycles()
 
         return self._df_cycles
@@ -121,7 +217,12 @@ class FormationCell:
         # Make cycle number start at 1 instead of 0
         df['Cycle Number'] += 1
 
+        # Drop the last cycle since there's no guarantee that this cycle
+        # finished
+        df = df[:-1]
+
         self._df_cycles = df
+
 
     def export_diagnostic_c20_data(self):
         """
@@ -196,7 +297,24 @@ class FormationCell:
         # First cycle efficiency
         # Final post-formation cell capacity
 
-        pass
+        df = self.get_formation_data()
+
+        stats = dict()
+
+        df_first_cycle = df[df['Cycle Number'] == 1]
+
+        if self.is_baseline_formation():
+            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number'])]
+        else:
+            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number']) - 1]
+
+        stats['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
+        stats['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
+        stats['form_first_cycle_efficiency'] = stats['form_first_discharge_capacity_ah'] / stats['form_first_charge_capacity_ah']
+
+        stats['form_final_capacity'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
+
+        return stats
 
 
     def get_aging_test_summary_statistics(self):
@@ -204,6 +322,8 @@ class FormationCell:
         Return summary statistics from the aging test
         """
 
+        # indices representing initial cell capacity
+        IDX_INIT_CAPACITY = np.arange(3, 8)
         stats = dict()
 
         df = self.get_aging_data_cycles()
@@ -212,18 +332,42 @@ class FormationCell:
 
         hppc_stats = self.summarize_hppc_pulse_statistics()
 
-        initial_capacity = np.mean(dch_capacity[4:7])
+        initial_capacity = np.mean(dch_capacity[IDX_INIT_CAPACITY])
         capacity_retention = dch_capacity/initial_capacity
 
         np.interp(0.5, capacity_retention, dch_capacity)
 
-        stats['initial_capacity'] = np.mean(dch_capacity[4:7])
-        stats['initial_capacity_std'] = np.std(dch_capacity[4:7])
+        stats['initial_capacity'] = np.mean(dch_capacity[IDX_INIT_CAPACITY])
+        stats['initial_capacity_std'] = np.std(dch_capacity[IDX_INIT_CAPACITY])
 
-        stats['cycles_to_50_pct'] = np.interp(0.5, capacity_retention, cyc_number)
-        stats['cycles_to_60_pct'] = np.interp(0.6, capacity_retention, cyc_number)
-        stats['cycles_to_70_pct'] = np.interp(0.7, capacity_retention, cyc_number)
-        stats['cycles_to_80_pct'] = np.interp(0.8, capacity_retention, cyc_number)
+
+        # Filter the capacity retention vs cycle number data to get a clean
+        # interp here
+        idx_bad = []
+
+        for idx in range(len(capacity_retention) - 1):
+
+            curr_capacity = capacity_retention[idx]
+            next_capacity = capacity_retention[idx + 1]
+            if next_capacity - curr_capacity > 0.2:
+
+                idx_bad.append(idx)
+
+                # Subsequent 3 cycles also belong to diagnostic tests
+                for jdx in [1, 2, 3]:
+                    if idx + jdx < len(capacity_retention) - 1:
+                        idx_bad.append(idx + jdx)
+
+        capacity_retention[idx_bad] = np.nan
+
+        df = pd.Series(capacity_retention)
+        capacity_retention = df.interpolate(method='linear').bfill().to_numpy()
+
+        stats['cycles_to_50_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.5)
+        stats['cycles_to_60_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.6)
+        stats['cycles_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.7)
+        stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
+
 
         stats['initial_cell_dcr_0_soc'] = hppc_stats['dcr_soc_0'][0]
         stats['initial_cell_dcr_50_soc'] = hppc_stats['dcr_soc_50'][0]
@@ -274,6 +418,7 @@ class FormationCell:
         stats = pd.DataFrame(stats)
 
         return stats
+
 
     def process_diagnostic_hppc_data(self):
         """
@@ -345,10 +490,14 @@ class FormationCell:
         return results_list
 
 
-    def __print__(self):
+    def __str__(self):
 
-        print(f'Cell {self.cellid}')
+        return f'Formation Cell {self.cellid}'
 
+
+"""
+Helper Functions
+"""
 
 def export_all_c20_data():
     """
@@ -361,9 +510,32 @@ def export_all_c20_data():
         cell.export_diagnostic_c20_data()
 
 
+def find_cycles_to_target_retention(retention, cyc_number, target_retention):
+    """
+    Returns first cycle to go below target retention
+
+    Args:
+      cyc_number (integer)
+      retention (0-1), capacity retention (capacity / initial capacity)
+      target_retention (0-1)
+
+    Returns:
+      returns a cycle number (integer)
+    """
+
+    if min(retention) > target_retention:
+        return np.nan
+
+    return cyc_number[np.where(retention < target_retention)[0][0]]
+
+
+"""
+Driver code
+"""
 
 if __name__ == "__main__":
 
     cell = FormationCell(1)
+    cell.get_metadata()
     cell.get_aging_test_summary_statistics()
 
