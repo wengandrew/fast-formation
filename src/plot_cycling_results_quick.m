@@ -16,7 +16,6 @@ function plot_cycling_results_quick()
   
     set_default_plot_settings();
     
-    
     fh = figure();
     ax1 = subplot(211); grid on; box on;
     xlabel('Cycle Index')
@@ -56,13 +55,8 @@ function plot_cycling_results_quick()
         
     end
     
-    keyboard
-    
     linkaxes([ax1, ax2], 'xy');
     ylim(ax1, [0 2.5])
-    
-    
-    keyboard
     
     
 end
