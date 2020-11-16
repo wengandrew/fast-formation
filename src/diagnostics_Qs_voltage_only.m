@@ -113,12 +113,14 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
     % Equality constraints
 
     % Vmax constraint
-    ceq(1) = Up(X(1)) - Un(X(3)) - Vmax;
+%     ceq(1) = Up(X(1)) - Un(X(3)) - Vmax;
 
     % Vmin constraint
     % ceq(2) = Up(X(1) + (Qmax + X(5)) / X(2)) - ...
     %          Un(X(3) - (Qmax + X(5)) / X(4)) - Vmin;
 
+    ceq = [];
+    
     % Inequality constraint (nothing here)
     c = [];
 
