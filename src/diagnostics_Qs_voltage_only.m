@@ -46,8 +46,8 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
         ub = [0.0335; 3.00; x100 ; Cn ; 0.10] .* S;
     else
         Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
-        lb = [0.0335; 1.00; 0.00 ; 1.0 ; 0.00] .* S;
-        ub = [0.0335; 3.5; 1.00 ; 3.5 ; 0.00] .* S;
+        lb = [0.0335; 1.00; 0.80 ; 1.0 ; 0.00] .* S;
+        ub = [0.0335; 3.5;  0.95 ; 3.5 ; 0.00] .* S;
     end
 
     % Regularization
