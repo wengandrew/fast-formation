@@ -1,6 +1,8 @@
 *.pyc
+*.vscode
 *.swp
 __pycache__/
+*.ipynb
 *__init__
 *.m~
 Icon

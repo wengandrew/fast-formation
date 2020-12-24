@@ -5,7 +5,7 @@ function process_voltage_curves()
     set_default_plot_settings();
 
     % Set paths
-    input_path = '~/Google Drive File Stream/My Drive/formation/data/2020-10-diagnostic-test-c20';
+    input_path = 'data/2020-10-diagnostic-test-c20';
     output_path = 'output/2020-08-microformation-esoh-fits';
     file_path = 'output/2020-08-microformation-voltage-curves';
 
