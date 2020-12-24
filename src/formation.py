@@ -3,13 +3,13 @@ import ipdb
 import pandas as pd
 import glob
 import numpy as np
+from scipy.signal import savgol_filter
 from matplotlib import pyplot as plt
 
-HOME_PATH = r'/Users/aweng/Google Drive File Stream/My Drive/formation/'
-PATH_CYCLE = HOME_PATH + 'data/2020-10-aging-test-cycles'
-PATH_TIMESERIES = HOME_PATH + 'data/2020-10-aging-test-timeseries'
-PATH_FORMATION = HOME_PATH + 'data/2020-06-formation-timeseries'
-PATH_METADATA = HOME_PATH + 'cell_tracker.xlsx'
+PATH_CYCLE = 'data/2020-10-aging-test-cycles'
+PATH_TIMESERIES = 'data/2020-10-aging-test-timeseries'
+PATH_FORMATION = 'data/2020-06-microformation-timeseries'
+PATH_METADATA = 'documents/cell_tracker.xlsx'
 
 STEP_INDEX_C3_CHARGE = 7
 STEP_INDEX_C3_DISCHARGE = 10
@@ -62,7 +62,7 @@ class FormationCell:
         Assigns data as object property
         """
 
-        df = pd.read_excel(PATH_METADATA)
+        df = pd.read_excel(PATH_METADATA, engine="openpyxl")
 
         df = df[df['cell_number'] == self.cellid]
 
@@ -135,7 +135,7 @@ class FormationCell:
 
     def _load_formation_data(self):
         """
-        Retrive data from formation test.
+        Retrive timeseries data from formation test.
 
         Assigns data as object property
         """
@@ -149,6 +149,7 @@ class FormationCell:
 
         df = pd.read_csv(file[0])
 
+        # Make cycle number start from 1, not 0, to follow standard convention
         df['Cycle Number'] +=1
 
         self._df_formation = df
@@ -251,6 +252,44 @@ class FormationCell:
         print('Done.')
 
 
+    def process_diagnostic_c3_data(self):
+        """
+        Filters out aging timeseries data to include only C/3 charge and
+        discharge curves
+
+        Returns:
+          A list of dictionaries containing the results
+        """
+
+        df = self.get_aging_data_timeseries()
+
+        df_c3_charge = df[df['Step Index'] == STEP_INDEX_C3_CHARGE]
+        df_c3_discharge = df[df['Step Index'] == STEP_INDEX_C3_DISCHARGE]
+
+        c3_test_cycle_indices = np.unique(df_c3_charge['Cycle Number'])
+
+        results = []
+
+        for idx_cyc in c3_test_cycle_indices:
+
+            df_chg = df_c3_charge[df_c3_charge['Cycle Number'] == idx_cyc]
+            df_dch = df_c3_discharge[df_c3_discharge['Cycle Number'] == idx_cyc]
+
+            curr_dict = dict()
+
+            curr_dict['cycle_index'] = idx_cyc
+            curr_dict['chg_capacity'] = df_chg['Charge Capacity (Ah)']
+            curr_dict['chg_voltage'] = df_chg['Potential (V)']
+            curr_dict['chg_dvdq'] = 1/df_chg['dQ/dV (Ah/V)']
+            curr_dict['dch_capacity'] = df_dch['Discharge Capacity (Ah)']
+            curr_dict['dch_voltage'] = df_dch['Potential (V)']
+            curr_dict['dch_dvdq'] = 1/df_dch['dQ/dV (Ah/V)']
+
+            results.append(curr_dict)
+
+        return results
+
+
     def process_diagnostic_c20_data(self):
         """
         Filters out aging timeseries data to include only C/20 charge and
@@ -301,18 +340,52 @@ class FormationCell:
 
         stats = dict()
 
-        df_first_cycle = df[df['Cycle Number'] == 1]
+        # Index for cycle containing the final discharge capacity
+        CYCLE_INDEX_LAST = np.max(df['Cycle Number']) if self.is_baseline_formation() else np.max(df['Cycle Number']) - 1
 
-        if self.is_baseline_formation():
-            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number'])]
-        else:
-            df_last_cycle = df[df['Cycle Number'] == np.max(df['Cycle Number']) - 1]
+        df_first_cycle = df[df['Cycle Number'] == 1]
+        df_last_cycle = df[df['Cycle Number'] == CYCLE_INDEX_LAST]
 
         stats['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
         stats['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
-        stats['form_first_cycle_efficiency'] = stats['form_first_discharge_capacity_ah'] / stats['form_first_charge_capacity_ah']
+        stats['form_first_cycle_efficiency'] = stats['form_first_discharge_capacity_ah'] / \
+                                               stats['form_first_charge_capacity_ah']
 
-        stats['form_final_capacity'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
+        stats['form_final_discharge_capacity_ah'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
+
+        # Process voltage decay signal during 12-hour rest step
+        STEP_INDEX_6HR_REST = 12 if self.is_baseline_formation() else 13
+        CYCLE_INDEX_6HR_REST = 3 if self.is_baseline_formation() else 7
+        VOLTAGE_MAXIMUM = 4.2
+
+        df_6hr_rest = df[(df['Cycle Number'] == CYCLE_INDEX_6HR_REST) &
+                          (df['Step Index'] == STEP_INDEX_6HR_REST)]
+
+        x = df_6hr_rest['Step Time (s)']
+        y = df_6hr_rest['Potential (V)']
+
+        # Smooth the signal
+        y_smoothed = savgol_filter(y, 41, 3)
+        delta_voltage = VOLTAGE_MAXIMUM - y_smoothed[-1]
+
+        # Sanity check
+        # plt.figure()
+        # plt.plot(x, y, x, y_smoothed)
+        # plt.show()
+        # plt.savefig('test.png')
+
+        # Process current bump signal during first CV hold step
+        STEP_INDEX_FIRST_CV_HOLD = 4 if self.is_baseline_formation() else 5
+        CYCLE_INDEX_FIRST_CV_HOLD = 1 if self.is_baseline_formation() else 1
+        df_first_cv_hold = df[(df['Cycle Number'] == CYCLE_INDEX_FIRST_CV_HOLD) &
+                              (df['Step Index'] == STEP_INDEX_FIRST_CV_HOLD)]
+
+        cv_hold_capacity = df_first_cv_hold['Charge Capacity (Ah)'].iloc[-1] - \
+                           df_first_cv_hold['Charge Capacity (Ah)'].iloc[0]
+
+        # Package the results
+        stats['form_6hr_rest_voltage_decay_v'] = delta_voltage
+        stats['form_first_cv_hold_capacity_ah'] = cv_hold_capacity
 
         return stats
 
@@ -368,7 +441,6 @@ class FormationCell:
         stats['cycles_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.7)
         stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
 
-
         stats['initial_cell_dcr_0_soc'] = hppc_stats['dcr_soc_0'][0]
         stats['initial_cell_dcr_50_soc'] = hppc_stats['dcr_soc_50'][0]
         stats['initial_cell_dcr_100_soc'] = hppc_stats['dcr_soc_100'][0]
@@ -401,6 +473,12 @@ class FormationCell:
             data.sort_values(by=['capacity'])
 
             dcr_soc_0 = data['resistance'].iloc[0]
+
+            # The lowest SOC pulse runs into danger of hitting MinV before the
+            # pulse is terminated. This will create a distortion in the signal
+            # so make sure that this doesn't happen.
+            assert data['duration_in_seconds'].iloc[0] > 9.9
+
             dcr_soc_100 = data['resistance'].iloc[-1]
 
             soc = data['capacity']/np.max(data['capacity'])
@@ -504,7 +582,7 @@ def export_all_c20_data():
     Dumps all C/20 charge and discharge data into the current directory.
     """
 
-    for cellid in range(1, NUM_TOTAL_CELLS+1):
+    for cellid in range(1, NUM_TOTAL_CELLS + 1):
         print(f'Working on cell {cellid}...')
         cell = FormationCell(cellid)
         cell.export_diagnostic_c20_data()
@@ -535,7 +613,8 @@ Driver code
 
 if __name__ == "__main__":
 
-    cell = FormationCell(1)
+    cell = FormationCell(33)
+    cell.summarize_hppc_pulse_statistics()
+    cell.get_formation_test_summary_statistics()
     cell.get_metadata()
     cell.get_aging_test_summary_statistics()
-
