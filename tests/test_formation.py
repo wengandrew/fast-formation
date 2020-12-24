@@ -40,6 +40,7 @@ def test_get_aging_data_cycles(sample_formation_cell):
 
     assert not df.empty
 
+
 def test_is_plating(sample_formation_cell):
 
     assert sample_formation_cell.is_plating() == 1
@@ -67,6 +68,16 @@ def test_get_formation_data(sample_formation_cell):
 def test_process_diagnostic_c20_data(sample_formation_cell):
 
     results_list = sample_formation_cell.process_diagnostic_c20_data()
+
+    # I want to assert more things
+    # not empty
+    # contains certain fields
+    assert isinstance(results_list, list)
+
+
+def test_process_diagnostic_c3_data(sample_formation_cell):
+
+    results_list = sample_formation_cell.process_diagnostic_c3_data()
 
     # I want to assert more things
     # not empty
