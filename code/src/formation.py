@@ -3,6 +3,7 @@ import ipdb
 import pandas as pd
 import glob
 import numpy as np
+from scipy import interpolate
 from scipy.signal import savgol_filter
 from matplotlib import pyplot as plt
 
@@ -17,7 +18,6 @@ STEP_INDEX_C20_CHARGE = 13
 STEP_INDEX_C20_DISCHARGE = 16
 STEP_INDEX_HPPC_CHARGE = 22
 STEP_INDEX_HPPC_DISCHARGE = 24
-
 
 # This is a fixed number for this experiment
 NUM_TOTAL_CELLS = 40
@@ -108,6 +108,15 @@ class FormationCell:
 
         return df['swelling_rating']
 
+    def get_thickness(self):
+        """
+        Return measured cell thickness in mm
+        """
+
+        df = self.get_metadata()
+
+        return df['thickness_mm']
+
 
     def is_room_temp(self):
         """
@@ -185,6 +194,7 @@ class FormationCell:
         df['Cycle Number'] += 1
 
         self._df_timeseries = df
+
 
 
     def get_aging_data_cycles(self):
@@ -390,6 +400,52 @@ class FormationCell:
         return stats
 
 
+    def calculate_var_q(self, to_plot=False):
+        """
+        Compute the variance in Q metric as reported by Seversen et al. from the
+        2019 Nature Energy paper.
+        """
+
+        CYC_DVDQ_FRESH = 3
+        CYC_DVDQ_FIRST_AGED = 56
+        result_list = self.process_diagnostic_c20_data()
+
+        # Make sure the dataset consists of the same set of cycles. If this is
+        # false, the analysis may still work but we need to be more careful
+        # about how we index into the data. For now let's catch and fail exceptions.
+        assert result_list[0]['cycle_index'] == CYC_DVDQ_FRESH
+        assert result_list[1]['cycle_index'] == CYC_DVDQ_FIRST_AGED
+
+        q0 = result_list[0]['dch_capacity']
+        v0 = result_list[0]['dch_voltage']
+
+        q1 = result_list[1]['dch_capacity']
+        v1 = result_list[1]['dch_voltage']
+
+        f0 = interpolate.interp1d(v0, q0, fill_value='extrapolate')
+        f1 = interpolate.interp1d(v1, q1, fill_value='extrapolate')
+
+        v_shared = np.linspace(4.2, 3.0, 250)
+        q0_interp = f0(v_shared)
+        q1_interp = f1(v_shared)
+
+        delta_q = q0_interp - q1_interp
+        var_q = np.var(delta_q)
+
+        if to_plot:
+            plt.figure()
+            plt.plot(delta_q, v_shared)
+            plt.xlabel('Capacity (Ah)')
+            plt.ylabel('Voltage (V)')
+            plt.title(f'Cell {self.cellid}')
+
+            plt.savefig(f'output/debug/var_q_cell_{self.cellid}')
+
+            print('VarQ figure has been exported.')
+
+        return var_q
+
+
     def get_aging_test_summary_statistics(self):
         """
         Return summary statistics from the aging test
@@ -412,7 +468,6 @@ class FormationCell:
 
         stats['initial_capacity'] = np.mean(dch_capacity[IDX_INIT_CAPACITY])
         stats['initial_capacity_std'] = np.std(dch_capacity[IDX_INIT_CAPACITY])
-
 
         # Filter the capacity retention vs cycle number data to get a clean
         # interp here
@@ -449,7 +504,7 @@ class FormationCell:
         stats['dcr_0_soc_at_c400'] = np.interp(400, hppc_stats['cycle_index'], hppc_stats['dcr_soc_0'])
         stats['dcr_50_soc_at_c400'] = np.interp(400, hppc_stats['cycle_index'], hppc_stats['dcr_soc_50'])
         stats['dcr_100_soc_at_c400'] = np.interp(400, hppc_stats['cycle_index'], hppc_stats['dcr_soc_100'])
-
+        stats['var_q_56_3'] = self.calculate_var_q()
 
         return stats
 
@@ -614,6 +669,7 @@ Driver code
 if __name__ == "__main__":
 
     cell = FormationCell(33)
+    cell.calculate_var_q()
     cell.summarize_hppc_pulse_statistics()
     cell.get_formation_test_summary_statistics()
     cell.get_metadata()

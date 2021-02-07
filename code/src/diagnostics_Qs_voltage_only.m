@@ -50,8 +50,6 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
         ub = [0.0335; 3.5;  0.95 ; 3.5 ; 0.00] .* S;
     end
 
-    % Regularization
-    L = 0;
 
     % V: model
     % Vt_data: data
@@ -61,10 +59,8 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     V_fit = V_data(idx);
     Q_fit = Q_data(idx);
 
-    fun = @(X) (V(X ./ S, Q_fit) - V_fit)' * ...
-               (V(X ./ S, Q_fit) - V_fit) + ...
-                  L * norm((X - Xi) ./ S, 2);
-
+    fun = @(X) (V(X ./ S, Q_fit) - V_fit)' * (V(X ./ S, Q_fit) - V_fit);
+    
     nonCon = @(X) connon(X ./ S, 4.20, 3.0, max(Q_fit), Up, Un);
 
     options = optimoptions('fmincon', ...

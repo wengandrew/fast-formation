@@ -1,13 +1,10 @@
 function plot_dvdq_and_dqdv_results_quick()
 
 
-    path = '/Users/aweng/Google Drive File Stream/My Drive/formation';
     directory = 'data/2020-10-diagnostic-test-c20';
 
-    full_path = fullfile(path, directory);
-
     set_default_plot_settings();
-    ref_table = readtable(fullfile(path, 'cell_tracker.xlsx'));
+    ref_table = 'documents/cell_tracker.xlsx';
 
     cellids = 36;
 
@@ -15,14 +12,14 @@ function plot_dvdq_and_dqdv_results_quick()
 
         cellid = cellids(i);
 
-        files_chg = find_files(full_path, sprintf('diagnostic_test_cell_%g_.*_charge', cellid));
+        files_chg = find_files(directory, sprintf('diagnostic_test_cell_%g_.*_charge', cellid));
 
         cyc_indices_chg = get_cycle_indices_from_filenames(files_chg);
         [~, sort_idx] = sort(cyc_indices_chg);
         cyc_indices_chg = cyc_indices_chg(sort_idx);
         files_chg = files_chg(sort_idx);
 
-        files_dch = find_files(full_path, sprintf('diagnostic_test_cell_%g_.*_discharge', cellid));
+        files_dch = find_files(directory, sprintf('diagnostic_test_cell_%g_.*_discharge', cellid));
 
         cyc_indices_dch = get_cycle_indices_from_filenames(files_dch);
         [~, sort_idx] = sort(cyc_indices_dch);

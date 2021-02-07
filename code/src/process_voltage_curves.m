@@ -2,12 +2,11 @@ function process_voltage_curves()
     % Takes in voltage data and run it through the eSOH model to get POS,
     % NEG, and LLI losses
 
-    set_default_plot_settings();
+    set_default_plot_settings_manuscript();
 
     % Set paths
     input_path = 'data/2020-10-diagnostic-test-c20';
     output_path = 'output/2020-08-microformation-esoh-fits';
-    file_path = 'output/2020-08-microformation-voltage-curves';
 
     cellid_array = 1:1:40;
 
@@ -19,7 +18,14 @@ function process_voltage_curves()
     all_x100 = [];
     all_Cn = [];
     all_Qcomp = [];
+    all_Qfull = [];
+    all_y0 = [];
+    all_x0 = [];
+    all_pos_excess = [];
+    all_neg_excess = [];
     all_RMSE_mV = [];
+    all_np_ratio = [];
+    all_n_li = [];
 
     for jdx = 1:numel(cellid_array)
 
@@ -56,33 +62,37 @@ function process_voltage_curves()
             ax1 = subplot(211); grid on; box on;
             line(raw_data.chg_capacity, raw_data.chg_voltage, 'Color', 'k')
             line(res.ful.Q, res.ful.V, 'Color', 'k', 'LineStyle', '--')
-            line(res.pos.Q, res.pos.V, 'Color', 'b', 'LineStyle', '--')
-            line(res.neg.Q, res.neg.V, 'Color', 'r', 'LineStyle', '--')
+            line(res.pos.Q, res.pos.V, 'Color', 'b', 'LineStyle', '-')
+            line(res.neg.Q, res.neg.V, 'Color', 'r', 'LineStyle', '-')
             xlabel('Capacity (Ah)')
             ylabel('Voltage (V)')
             ylim([0 5])
             xlim([-1 3])
             title({sprintf('cell %g (%s), cycle %g', ...
                 cellid, cell_config.group, cyc_id), ...
-                soh_parameters_to_string(res.Xt), ...
-                sprintf('RMSE = %.1f mV', res.RMSE_mV)})
-            lh = legend('Experiment', 'Model', 'Model (POS)', 'Model (NEG)');
+                soh_parameters_to_string_1(res), ...
+                soh_parameters_to_string_2(res)}, ...
+                'FontWeight', 'normal', ...
+                'FontSize', 18)
+            lh = legend('Experiment', 'Model', 'Model (Pos)', 'Model (Neg)');
             set(lh, 'Location', 'East', 'Color', 'w')
 
             ax2 = subplot(212); grid on; box on;
             line(raw_data.chg_capacity, raw_data.chg_dvdq, 'Color', 'k')
             line(res.ful.Q, res.ful.dVdQ, 'Color', 'k', 'LineStyle', '--')
-            line(res.pos.Q, res.pos.dVdQ, 'Color', 'b', 'LineStyle', '--')
-            line(res.neg.Q, res.neg.dVdQ, 'Color', 'r', 'LineStyle', '--')
-            ylim([0 0.5])
+            line(res.pos.Q, res.pos.dVdQ, 'Color', 'b', 'LineStyle', '-')
+            line(res.neg.Q, res.neg.dVdQ, 'Color', 'r', 'LineStyle', '-')
+            ylim([0 0.8])
             xlabel('Capacity (Ah)')
-            ylabel('dV/dQ')
+            ylabel('|dV/dQ|')
 
             linkaxes([ax1 ax2], 'x')
 
+            tightfig();
+            
             saveas(fh, sprintf('%s/%s.png', output_path, output_filename))
             saveas(fh, sprintf('%s/%s.fig', output_path, output_filename))
-
+            
             close(fh)
 
             % Accumulate summary results
@@ -94,17 +104,44 @@ function process_voltage_curves()
             all_Cn = [all_Cn ; res.Xt(4)];
             all_Qcomp = [all_Qcomp ; res.Xt(5)];
             all_RMSE_mV = [all_RMSE_mV ; res.RMSE_mV];
+            all_y0 = [all_y0 ; res.y0];
+            all_x0 = [all_x0 ; res.x0];
+            all_Qfull = [all_Qfull ; res.Cf];
+            all_pos_excess = [all_pos_excess ; res.Cp_excess];
+            all_neg_excess = [all_neg_excess ; res.Cn_excess];
+            all_np_ratio = [all_np_ratio ; res.np_ratio];
+            all_n_li = [all_n_li ; res.n_li];
+            
+
 
         end % loop over cycle index
+
+        all_lli = [all_lli ; 1 - 
+        
+                    all_lli = [all_lli ; 1 - res.n_li ./ res.n_li(1)];
+
+            all_lam_pe = [all_lam_pe ; 1 - res.Xt(2)Cp ./ Cp(1);
+        lam_ne = 1 - Cn ./ Cn(1);
+
+        % Full Cell Loss
+        c20_loss = 1 - this_tbl.Qfull ./ this_tbl.Qfull(1);
+
 
     end % loop over cellids
 
     % Aggregate and export results in a table
     results_table = table(all_cellid, all_cyc_id, ...
-         all_y100, all_Cp, all_x100, ...
-         all_Cn, all_Qcomp, all_RMSE_mV, ...
-         'VariableNames', {'cellid', 'cycle_number', 'y100', 'Cp', ...
-         'x100', 'Cn', 'Qcomp', 'RMSE_mV'});
+         all_y100, all_Cp, ...
+         all_x100, all_Cn, ...
+         all_Qcomp, all_x0, all_y0, ...
+         all_Qfull, all_pos_excess, all_neg_excess, ...
+         all_RMSE_mV, all_np_ratio, all_n_li, ...
+         'VariableNames', {'cellid', 'cycle_number', ...
+            'y100', 'Cp', ...
+            'x100', 'Cn', ...
+            'Qcomp', 'x0', 'y0', ...
+            'Qfull', 'pos_excess', 'neg_excess', ...
+            'RMSE_mV', 'np_ratio', 'n_li'});
 
     writetable(results_table, 'summary_esoh_table.csv');
 
@@ -122,12 +159,25 @@ function cyc_index = parse_cycle_index_from_filename(file_fullpath)
 
 end
 
-function result = soh_parameters_to_string(Xt)
+function result = soh_parameters_to_string_1(res)
     % Return a string representation of Xt
 
-    result = sprintf(['y_{100} = %.2f, C_p = %.2f Ah, '...
-                      'x_{100} = %.2f, C_n = %.2f Ah, '...
-                      'Q_{comp} = %.2f Ah'], ...
-        Xt(1), Xt(2), Xt(3), Xt(4), Xt(5));
+    Xt = res.Xt;
+    
+    result = sprintf(['y_{100} = %.2f, y_{0} = %.2f, C_p = %.2f Ah, '...
+                      'x_{100} = %.2f, x_{0} = %.2f, C_n = %.2f Ah, ', ...
+                      'C_n/C_p = %.2f'], ...
+        res.y100, res.y0, res.Cp, ...
+        res.x100, res.x0, res.Cn, res.np_ratio);
+
+end
+
+function result = soh_parameters_to_string_2(res)
+
+ Xt = res.Xt;
+    
+    result = sprintf(['Q_{full} = %.2f Ah, C_{n,e} = %.2f Ah, C_{p,e} = %.2f Ah, '...
+                      'Q_{comp} = %.2f Ah, RMSE = %.1f mV'], ...
+        res.Cf, res.Cn_excess, res.Cp_excess, Xt(5), res.RMSE_mV);
 
 end

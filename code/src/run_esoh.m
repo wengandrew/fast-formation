@@ -21,11 +21,40 @@ function result = run_esoh(tbl, Un, Up)
 
     [neg_pot, neg_pot_dvdq] = calculate_neg(ful_cap, Xt, Un);
     [neg_pot, neg_cap, neg_pot_dvdq] = expand_neg(neg_pot, ful_cap, Xt, Un);
+    
+    C = max(ful_cap);
+
+    x100 = Xt(3);
+    y100 = Xt(1);
+    Cp = Xt(2);
+    Cn = Xt(4);
+    y0 = y100 + C/Cp;
+    x0 = x100 - C/Cn; 
+    np_ratio = Cn/Cp;
+
+    % Get positive and negative electrode excess values
+    Vn100 = interp1(neg_cap, neg_pot, max(ful_cap));
+    Cn100 = interp1(neg_pot, neg_cap, Vn100);
+    Cn_excess = max(neg_cap) - Cn100;
+    Cp_excess = abs(min(pos_cap));
+    
+    n_li = 3600/96485 .* (y100 .* Cp + x100 .* Cn);
 
     % Package results
     result.Xt = Xt;
+    result.np_ratio = np_ratio;
+    result.Cp = Xt(2);
+    result.Cn = Xt(4);
+    result.y100 = y100;
+    result.y0 = y0;
+    result.x0 = x0;
+    result.x100 = x100;
+    result.n_li = n_li;
+    result.Cn_excess = Cn_excess;
+    result.Cp_excess = Cp_excess;
+    result.Cf = max(ful_cap);
     result.RMSE_mV = RMSE_V*1000;
-
+    
     % Full cell model curves
     result.ful.Q = ful_cap;
     result.ful.V = ful_pot;
@@ -45,7 +74,7 @@ function result = run_esoh(tbl, Un, Up)
     result.orig.Q = capacity;
     result.orig.V = voltage;
     result.orig.dVdQ = gradient(voltage)./gradient(capacity);
-
+    
 end
 
 
@@ -53,7 +82,7 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, Up)
     % Expands a positive potential vector given a capacity-potential curve in
     % the charge direction
 
-    POS_MAX_VOLTAGE = 4.4;
+    POS_MAX_VOLTAGE = 4.5;
     POS_MIN_VOLTAGE = 2.5;
 
     diff = cap(2) - cap(1);
@@ -84,7 +113,7 @@ function [pot_full, cap_full_shifted, pot_dvdq_full] = expand_neg(pot, cap, Xt, 
     % Expand a negative potential vector given a capacity-potential curve in the
     % charge direction
 
-    NEG_MAX_VOLTAGE = 2.0;
+    NEG_MAX_VOLTAGE = 1.0;
     NEG_MIN_VOLTAGE = 0;
 
     diff = cap(2) - cap(1);
