@@ -30,6 +30,8 @@ function file_list = find_files(path, regex)
         file_list = [file_list; file_full_path];
         
     end
+    
+    file_list = natsortfiles(file_list);
 
     if isempty(file_list)
         error(['No files found in path: ''%s'' matching '...
