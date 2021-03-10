@@ -1,6 +1,6 @@
 function plot_summary_esoh_table()
 
-    tbl = readtable('output/2020-10-esoh-results-summary/y100-fix/summary_esoh_table.csv');
+    tbl = readtable('output/2021-03-fast-formation-esoh-fits/summary_esoh_table.csv');
    
     % Get rid of high RMS data points
 %     RMSE_THRESHOLD_MV = 120;
@@ -66,7 +66,6 @@ end
 
 
 function plot_helper_degradation_metrics(plot_type, tbl)
-
     % Plot of C/20 Loss, LAM_PE, LAM_NE, and LLI
     % Against cycle count
     
@@ -143,7 +142,7 @@ function plot_helper_degradation_metrics(plot_type, tbl)
         % FILTER OUT RESULTS EXCEEDING SOME THRESHOLD
         LOSS_THRESHOLD = 1;
         
-        msz = 4;
+        marker_size = 4;
         
 %         line(this_tbl.cycle_number, Q_full, ...
         line(this_tbl.cycle_number, c20_loss.*100, ...
@@ -151,7 +150,7 @@ function plot_helper_degradation_metrics(plot_type, tbl)
             'MarkerFaceColor', config.color, ...
             'LineStyle', config.linestyle, ...
             'LineWidth', 1, ...
-            'MarkerSize', msz)
+            'MarkerSize', marker_size)
         
         idx = find(lam_pe < LOSS_THRESHOLD);
         %         line(this_tbl.cycle_number, Cp, ...
@@ -160,7 +159,7 @@ function plot_helper_degradation_metrics(plot_type, tbl)
             'MarkerFaceColor', config.color, ...
             'LineStyle', config.linestyle, ...
             'LineWidth', 1, ...
-            'MarkerSize', msz)
+            'MarkerSize', marker_size)
 
         idx = find(lam_ne < LOSS_THRESHOLD);
         %         line(this_tbl.cycle_number, Cn, ...
@@ -170,7 +169,7 @@ function plot_helper_degradation_metrics(plot_type, tbl)
             'MarkerFaceColor', config.color, ...
             'LineWidth', 1, ...
             'LineStyle', config.linestyle, ...
-            'MarkerSize', msz)
+            'MarkerSize', marker_size)
 
         
         idx = find(lli < LOSS_THRESHOLD);
@@ -181,12 +180,11 @@ function plot_helper_degradation_metrics(plot_type, tbl)
             'MarkerFaceColor', config.color, ...
             'LineStyle', config.linestyle, ...
             'LineWidth', 1, ...
-            'MarkerSize', msz)
+            'MarkerSize', marker_size)
 
         
     end % loop over cellids
     
-    keyboard
 
     linkaxes([ax1, ax2, ax3], 'x')
 
@@ -206,22 +204,26 @@ function plot_helper_state_variables(plot_type, tbl)
 
     varnames = {'y100', 'x100', 'y0', 'x0', ...
                 'Cp', 'Cn', 'pos_excess', 'neg_excess', ...
-                'np_ratio', 'n_li', 'RMSE_mV', 'Qcomp'};
+                'np_ratio', 'n_li', 'RMSE_mV', 'Qcomp', ...
+                'Cn_pf', 'x100_pf'};
 
     varlabels = {'y_{100}', 'x_{100}', 'y_0', 'x_0', ...
                  'C_p (Ah)', 'C_n (Ah)', 'C_{p,excess} (Ah)', 'C_{n,excess} (Ah)', ...
-                 'C_n / C_p', 'n_{Li} (moles)', 'RMSE_mV', 'Q_{comp}'};
+                 'C_n / C_p', 'n_{Li} (moles)', 'RMSE_mV', 'Q_{comp}', ...
+                 'C_{n,PF} (Ah)', 'x_{100, PF}'};
    
     ylims = {[0 0.05], [0.75 1], ...
              [0.6, 1], [0 0.05], ...
              [1.5 3], [1.5 3], ...
              [0 0.8], [0 0.8], ...
              [0.5 1.10], [0.03 0.10], [0 150], ...
-             [-0.05 0.05]};
+             [-0.05 0.05], ...
+             [1.5 3], [0.75 1]};
+         
     % Axis declaration
     for i = 1:numel(varnames)
 
-        ax(i) = subplot(6, 2, i);
+        ax(i) = subplot(7, 2, i);
         grid on; 
         box on;
         ylim(ylims{i})
