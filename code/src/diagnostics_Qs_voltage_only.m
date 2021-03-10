@@ -8,13 +8,8 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     %
     % Outputs:
     %   Xt: output vector of parameters (5 x 1)
+    %   RMSE_V: 
     
-    SOLVE_USING_PEAK_FIND = false;
-
-    % Get neg electrode params directly using PeakFind method
-    if SOLVE_USING_PEAK_FIND
-        [Cn, x100] = solve_using_peak_find(Q_data, V_data);
-    end
 
     % Flip the vectors so that the "charge" becomes a "discharge"
     % After this, Q = 0 corresponds to Vmax ~ 4.2V
@@ -39,17 +34,10 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
 
     % Scaling the input params which have different units
     S = [1; 1/6; 1; 1/6; 1];
-
-    if SOLVE_USING_PEAK_FIND
-        Xi = [0.0335; 2.70; x100 ; Cn ; 0.00] .* S;
-        lb = [0.0335; 1.00; x100 ; Cn ; 0.00] .* S;
-        ub = [0.0335; 3.00; x100 ; Cn ; 0.10] .* S;
-    else
-        Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
-        lb = [0.0335; 1.00; 0.80 ; 1.0 ; 0.00] .* S;
-        ub = [0.0335; 3.5;  0.95 ; 3.5 ; 0.00] .* S;
-    end
-
+    
+    Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
+    lb = [0.0335; 1.00; 0.80 ; 1.0 ; 0.00] .* S;
+    ub = [0.0335; 3.5;  0.95 ; 3.5 ; 0.00] .* S;
 
     % V: model
     % Vt_data: data
@@ -122,19 +110,3 @@ function [c, ceq] = connon(X, Vmax, Vmin, Qmax, Up, Un)
 
 end
 
-function [Cn, x100] = solve_using_peak_find(capacity, voltage)
-    %
-    % Args
-    %  capacity: CHARGE capacity curve
-    %  voltage: CHARGE voltage curve
-
-    Q1_REF = 0.129; % Peak 1 position based on 'original' Un
-    Q2_REF = 0.49 ; % Peak 2 position based on 'original' Un
-
-    [p1_idx, p2_idx] = find_peaks(capacity, voltage);
-
-    Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
-
-    x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
-
-end
