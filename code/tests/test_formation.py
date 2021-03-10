@@ -18,9 +18,7 @@ def sample_formation_cell(sample_timeseries_df):
     # Two options:
     # - manually type in some data
     # - read from a csv
-
     return cell
-
 
 def test_initialization(sample_formation_cell):
 
@@ -112,11 +110,15 @@ def test_get_formation_test_summary_statistics(sample_formation_cell):
 
     assert stats
 
+def test_get_esoh_fitting_results(sample_formation_cell):
+
+    fitting_results = sample_formation_cell.get_esoh_fitting_results()
+
+    assert not fitting_results.empty
+
 
 def test_summarize_hppc_pulse_statistics(sample_formation_cell):
 
-    # When crashing I want to inspect at the source directly
-
     stats = sample_formation_cell.summarize_hppc_pulse_statistics()
 
-    assert not stats.empty
+    assert not stats[0].empty
