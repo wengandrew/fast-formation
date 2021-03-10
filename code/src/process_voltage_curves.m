@@ -2,6 +2,8 @@ function process_voltage_curves()
     % Takes in voltage data and run it through the eSOH model to get POS,
     % NEG, and LLI losses
 
+    TO_RECALIBRATE = false; % Run the curve recalibration procedure?
+
     set_default_plot_settings_manuscript();
 
     % Set paths
@@ -26,6 +28,12 @@ function process_voltage_curves()
     all_RMSE_mV = [];
     all_np_ratio = [];
     all_n_li = [];
+    all_LLI = [];
+    all_LAM_PE = [];
+    all_LAM_NE = [];
+    all_Cn_pf = [];
+    all_x100_pf = [];
+    all_c20_loss = [];
 
     for jdx = 1:numel(cellid_array)
 
@@ -35,6 +43,11 @@ function process_voltage_curves()
         cell_config = get_cellid_config(cellid);
 
         [Un, Up] = get_electrode_models('original');
+
+        curr_n_li = [];
+        curr_Cp = [];
+        curr_Cn = [];
+        curr_c20_cap = [];
         
         for idx = 1:numel(file_list)
 
@@ -48,14 +61,17 @@ function process_voltage_curves()
             if cyc_id > 500
                 continue
             end
-            
+
             raw_data = readtable(input_filename);
-                
+
+            % Run the eSOH algorithm(s) to get the results file
             res = run_esoh(raw_data, Un, Up);
-            
+
             % Do the recalibration
-%             [Un, Up] = recalibrate(raw_data.voltage, raw_data.charge_capacity, ...
-%                 res.Xt, Un, Up);
+            if TO_RECALIBRATE
+                 [Un, Up] = recalibrate(raw_data.voltage, raw_data.charge_capacity, ...
+                     res.Xt, Un, Up);
+            end
 
             fh = figure();
 
@@ -89,10 +105,10 @@ function process_voltage_curves()
             linkaxes([ax1 ax2], 'x')
 
             tightfig();
-            
+
             saveas(fh, sprintf('%s/%s.png', output_path, output_filename))
             saveas(fh, sprintf('%s/%s.fig', output_path, output_filename))
-            
+
             close(fh)
 
             % Accumulate summary results
@@ -111,21 +127,20 @@ function process_voltage_curves()
             all_neg_excess = [all_neg_excess ; res.Cn_excess];
             all_np_ratio = [all_np_ratio ; res.np_ratio];
             all_n_li = [all_n_li ; res.n_li];
+            all_Cn_pf = [all_Cn_pf ; res.Cn_pf];
+            all_x100_pf = [all_x100_pf ; res.x100_pf];
             
-
+            curr_Cp(idx, 1) = res.Cp;
+            curr_Cn(idx, 1) = res.Cn;
+            curr_n_li(idx, 1) = res.n_li;
+            curr_c20_cap(idx, 1) = max(res.ful.Q);
 
         end % loop over cycle index
-
-        all_lli = [all_lli ; 1 - 
         
-                    all_lli = [all_lli ; 1 - res.n_li ./ res.n_li(1)];
-
-            all_lam_pe = [all_lam_pe ; 1 - res.Xt(2)Cp ./ Cp(1);
-        lam_ne = 1 - Cn ./ Cn(1);
-
-        % Full Cell Loss
-        c20_loss = 1 - this_tbl.Qfull ./ this_tbl.Qfull(1);
-
+        all_LLI = [all_LLI ; curr_n_li ./ curr_n_li(1)];
+        all_LAM_PE = [all_LAM_PE ; 1 - curr_Cp ./ curr_Cp(1)];
+        all_LAM_NE = [all_LAM_NE ; 1 - curr_Cn ./ curr_Cn(1)];
+        all_c20_loss = [all_c20_loss ; curr_c20_cap ./ curr_c20_cap(1)];
 
     end % loop over cellids
 
@@ -136,12 +151,16 @@ function process_voltage_curves()
          all_Qcomp, all_x0, all_y0, ...
          all_Qfull, all_pos_excess, all_neg_excess, ...
          all_RMSE_mV, all_np_ratio, all_n_li, ...
+         all_LLI, all_LAM_PE, all_LAM_NE, all_c20_loss, ...
+         all_Cn_pf, all_x100_pf, ...
          'VariableNames', {'cellid', 'cycle_number', ...
             'y100', 'Cp', ...
             'x100', 'Cn', ...
             'Qcomp', 'x0', 'y0', ...
             'Qfull', 'pos_excess', 'neg_excess', ...
-            'RMSE_mV', 'np_ratio', 'n_li'});
+            'RMSE_mV', 'np_ratio', 'n_li', ...
+            'LLI', 'LAM_PE', 'LAM_NE', 'C20_loss', ...
+            'Cn_pf', 'x100_pf'});
 
     writetable(results_table, 'summary_esoh_table.csv');
 
@@ -163,7 +182,7 @@ function result = soh_parameters_to_string_1(res)
     % Return a string representation of Xt
 
     Xt = res.Xt;
-    
+
     result = sprintf(['y_{100} = %.2f, y_{0} = %.2f, C_p = %.2f Ah, '...
                       'x_{100} = %.2f, x_{0} = %.2f, C_n = %.2f Ah, ', ...
                       'C_n/C_p = %.2f'], ...
@@ -175,7 +194,7 @@ end
 function result = soh_parameters_to_string_2(res)
 
  Xt = res.Xt;
-    
+
     result = sprintf(['Q_{full} = %.2f Ah, C_{n,e} = %.2f Ah, C_{p,e} = %.2f Ah, '...
                       'Q_{comp} = %.2f Ah, RMSE = %.1f mV'], ...
         res.Cf, res.Cn_excess, res.Cp_excess, Xt(5), res.RMSE_mV);

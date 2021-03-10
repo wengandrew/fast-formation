@@ -10,9 +10,15 @@ function result = run_esoh(tbl, Un, Up)
     % Returns
     %   result: a struct holding results
 
+    F = 96485; % Faraday's constants
+    
     voltage = tbl.chg_voltage;
     capacity = tbl.chg_capacity;
 
+    % Run the PeakFind algorithm and unpack the parameters
+    [Cn_peak_find, x100_peak_find] = solve_using_peak_find(capacity, voltage);
+
+    % Run the eSOH algorithm and unpack the parameters
     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
         diagnostics_Qs_voltage_only(capacity, voltage, Un, Up);
 
@@ -38,7 +44,7 @@ function result = run_esoh(tbl, Un, Up)
     Cn_excess = max(neg_cap) - Cn100;
     Cp_excess = abs(min(pos_cap));
     
-    n_li = 3600/96485 .* (y100 .* Cp + x100 .* Cn);
+    n_li = 3600/F .* (y100 .* Cp + x100 .* Cn);
 
     % Package results
     result.Xt = Xt;
@@ -54,6 +60,8 @@ function result = run_esoh(tbl, Un, Up)
     result.Cp_excess = Cp_excess;
     result.Cf = max(ful_cap);
     result.RMSE_mV = RMSE_V*1000;
+    result.Cn_pf = Cn_peak_find;
+    result.x100_pf = x100_peak_find;
     
     % Full cell model curves
     result.ful.Q = ful_cap;
@@ -110,8 +118,8 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, Up)
 end
 
 function [pot_full, cap_full_shifted, pot_dvdq_full] = expand_neg(pot, cap, Xt, Un)
-    % Expand a negative potential vector given a capacity-potential curve in the
-    % charge direction
+    % Expand a negative potential vector given a capacity-potential curve
+    % in the charge direction
 
     NEG_MAX_VOLTAGE = 1.0;
     NEG_MIN_VOLTAGE = 0;
@@ -170,5 +178,28 @@ function [pot, dvdq] = calculate_pos(cap, Xt, Up)
     % Convert curve from discharge to charge
     pot = fliplr(pot);
     dvdq = fliplr(dvdq);
+
+end
+
+function [Cn, x100] = solve_using_peak_find(capacity, voltage)
+    % Solve for the negative electrode capacity and x100 using the
+    % "peak-finding" method.
+    %
+    % Args
+    %  capacity: CHARGE capacity curve
+    %  voltage: CHARGE voltage curve
+    %
+    % Returns
+    %  Cn: negative electrode capacity in Ah
+    %  x100: negative electrode stoichimetry at 100% SOC
+    
+    Q1_REF = 0.129; % Peak 1 position based on 'original' Un
+    Q2_REF = 0.49 ; % Peak 2 position based on 'original' Un
+
+    [p1_idx, p2_idx] = find_peaks(capacity, voltage);
+
+    Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
+
+    x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
 
 end
