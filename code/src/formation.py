@@ -21,6 +21,9 @@ STEP_INDEX_C20_DISCHARGE = 16
 STEP_INDEX_HPPC_CHARGE = 22
 STEP_INDEX_HPPC_DISCHARGE = 24
 
+STEP_INDEX_FORMATION_C20_CHARGE_BASELINE = 10
+STEP_INDEX_FORMATION_C20_CHARGE_FAST = 11
+
 # This is a fixed number for this experiment
 NUM_TOTAL_CELLS = 40
 
@@ -379,19 +382,33 @@ class FormationCell:
         Return summary statistics from the formation cycle
         """
 
-        # First cycle efficiency
-        # Final post-formation cell capacity
-
         df = self.get_formation_data()
 
         res_dict = dict()
 
         # Index for cycle containing the final discharge capacity
         # Work around some quirks due to schedule file differences
-        CYCLE_INDEX_LAST = np.max(df['Cycle Number']) if self.is_baseline_formation() else np.max(df['Cycle Number']) - 1
+        if self.is_baseline_formation():
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number'])
+            step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_BASELINE
+        else:
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number']) - 1
+            step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_FAST
 
         df_first_cycle = df[df['Cycle Number'] == 1]
         df_last_cycle = df[df['Cycle Number'] == CYCLE_INDEX_LAST]
+
+        df_c20_charge = df[(df['Cycle Number'] == CYCLE_INDEX_LAST) &
+                           (df['Step Index'] == step_index_c20_charge)]
+
+        # Extract voltage trace from the top of the C/20 charge preceding the
+        # 6-hour voltage decay. PAttia suggested using the shape of this curve
+        # to determine if the voltage decay is related to shifts in the voltage
+        # curve, e.g. due to relative stoic realignment between positive and
+        # negative electrode.
+        MIN_VOLTAGE = 4.1
+        c20_charge_voltage_end_vec = df_c20_charge['Potential (V)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
+        c20_charge_capacity_end_vec = df_c20_charge['Charge Capacity (Ah)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
 
         res_dict['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
         res_dict['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
@@ -399,6 +416,7 @@ class FormationCell:
                                                   res_dict['form_first_charge_capacity_ah']
 
         res_dict['form_final_discharge_capacity_ah'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
+
 
         # Process voltage decay signal during 12-hour rest step
         STEP_INDEX_6HR_REST = 12 if self.is_baseline_formation() else 13
@@ -434,6 +452,7 @@ class FormationCell:
         # plt.show()
         # plt.savefig('test.png')
 
+
         # Process current bump signal during first CV hold step
         STEP_INDEX_FIRST_CV_HOLD = 4 if self.is_baseline_formation() else 5
         CYCLE_INDEX_FIRST_CV_HOLD = 1 if self.is_baseline_formation() else 1
@@ -449,6 +468,9 @@ class FormationCell:
         res_dict['form_6hr_rest_mv_per_day_steady'] = mv_per_day_steady
         res_dict['form_6hr_rest_mv_per_sec_initial'] = mv_per_sec_initial
         res_dict['form_first_cv_hold_capacity_ah'] = cv_hold_capacity
+        res_dict['form_last_charge_voltage_trace_cap_ah'] = c20_charge_capacity_end_vec
+        res_dict['form_last_charge_voltage_trace_voltage_v'] = c20_charge_voltage_end_vec
+
         return res_dict
 
 
