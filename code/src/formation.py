@@ -1,19 +1,23 @@
-import pytest
-import ipdb
-import pandas as pd
 import glob
+
+import ipdb
 import numpy as np
-from scipy import interpolate
-from scipy import stats
-from scipy.signal import savgol_filter
+import json
+import pandas as pd
+import pytest
 from matplotlib import pyplot as plt
+from scipy import interpolate, stats
+from scipy.signal import find_peaks, savgol_filter
 
-PATH_CYCLE = 'data/2020-10-aging-test-cycles'
+# Configure paths
+PATH_CYCLE      = 'data/2020-10-aging-test-cycles'
 PATH_TIMESERIES = 'data/2020-10-aging-test-timeseries'
-PATH_FORMATION = 'data/2020-06-microformation-timeseries'
-PATH_METADATA = 'documents/cell_tracker.xlsx'
-PATH_ESOH = 'output/2021-03-fast-formation-esoh-fits/summary_esoh_table.csv'
+PATH_FORMATION  = 'data/2020-06-microformation-timeseries'
+PATH_METADATA   = 'documents/cell_tracker.xlsx'
+PATH_ESOH_SUMMARY = 'output/2021-04-12-formation-esoh-fits-y100-free/summary_esoh_table.csv'
+PATH_ESOH_DATA = 'output/2021-04-12-formation-esoh-fits-y100-free'
 
+# Configure step indices during cycling
 STEP_INDEX_C3_CHARGE = 7
 STEP_INDEX_C3_DISCHARGE = 10
 STEP_INDEX_C20_CHARGE = 13
@@ -21,8 +25,15 @@ STEP_INDEX_C20_DISCHARGE = 16
 STEP_INDEX_HPPC_CHARGE = 22
 STEP_INDEX_HPPC_DISCHARGE = 24
 
+# Configure step indices during formation
 STEP_INDEX_FORMATION_C20_CHARGE_BASELINE = 10
+STEP_INDEX_FORMATION_C20_DISCHARGE_BASELINE = 13
 STEP_INDEX_FORMATION_C20_CHARGE_FAST = 11
+STEP_INDEX_FORMATION_C20_DISCHARGE_FAST = 14
+STEP_INDEX_FORMATION_FIRST_DISCHARGE_BASELINE = 6
+STEP_INDEX_FORMATION_FIRST_DISCHARGE_FAST = 9
+STEP_INDEX_FORMATION_FIRST_DISCHARGE_REST_BASELINE = 7
+STEP_INDEX_FORMATION_FIRST_DISCHARGE_REST_FAST = [] # Does not exist
 
 # This is a fixed number for this experiment
 NUM_TOTAL_CELLS = 40
@@ -30,8 +41,13 @@ NUM_TOTAL_CELLS = 40
 class FormationCell:
     """
     Representation of a cell that has gone through formation cycles at the
-    University of Michigan battery lab. This cell will have gone through a
-    series of experiments and include data on formation, aging, dvdq, etc.
+    University of Michigan battery lab.
+
+    This cell will have gone through a series of experiments and include data
+    during formation and during the cycle test.
+
+    This class handles ingestion of all relevant datasets and provides methods
+    to process and summarize key features from each part of the test.
     """
 
     def __init__(self, cellid):
@@ -44,6 +60,7 @@ class FormationCell:
         self._df_formation = pd.DataFrame()
         self._df_esoh_fitting_results = pd.DataFrame()
 
+        # Initialize dictionaries
         self._metadata_dict = dict()
 
 
@@ -214,10 +231,10 @@ class FormationCell:
 
     def _load_esoh_fitting_results(self):
         """
-        Retrive pre-calculated results from the eSOH fitting
+        Retrive pre-calculated summary results from the eSOH fitting
         """
 
-        file = glob.glob(f'{PATH_ESOH}')
+        file = glob.glob(f'{PATH_ESOH_SUMMARY}')
 
         df = pd.read_csv(file[0])
         df = df[(df['cellid'] == self.cellid)]
@@ -225,9 +242,35 @@ class FormationCell:
         self._df_esoh_fitting_results = df
 
 
+    def get_esoh_fitting_data(self):
+        """
+        Retrieve raw data from the eSOH fits
+
+        Returns:
+          - A list of dictionaries. Each dictionary holds
+        """
+
+
+        # Load in the json files
+        file_list = glob.glob(f'{PATH_ESOH_DATA}/cell_{self.cellid}_*.json')
+
+        data_list = []
+
+        for file in file_list:
+
+            with open(file) as f:
+                data = json.load(f)
+                data['cycle_index'] = float(file.split('/')[-1]
+                                                .split('_')[-1]
+                                                .split('.')[0])
+                data_list.append(data)
+
+        return data_list
+
+
     def get_esoh_fitting_results(self):
         """
-        Get the eSOH fitting results with catching implementation
+        Get the eSOH fitting summary results with caching implementation
         """
 
         if self._df_esoh_fitting_results.empty:
@@ -297,8 +340,6 @@ class FormationCell:
             dch_output.to_csv(f'diagnostic_test_cell_{self.cellid}_'\
                             f'cyc_{res["cycle_index"]}_discharge.csv')
 
-
-        print('Done.')
 
 
     def process_diagnostic_c3_data(self):
@@ -377,6 +418,104 @@ class FormationCell:
         return results
 
 
+    def get_formation_test_final_c20_charge(self):
+        """
+        Return DataFrame for the final C/20 charge from the formation test
+        """
+
+        df = self.get_formation_data()
+
+        if self.is_baseline_formation():
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number'])
+            step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_BASELINE
+        else:
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number']) - 1
+            step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_FAST
+
+        df_c20_charge = df[(df['Cycle Number'] == CYCLE_INDEX_LAST) &
+                           (df['Step Index'] == step_index_c20_charge)]
+
+
+        return df_c20_charge
+
+
+    def get_formation_test_final_c20_charge_qpp(self, to_plot=False):
+        """
+        Return peak to peak capacity corresponding to the final C/20 charge from
+        the formation test. Implement some sort of peak finding algorithm to do
+        this.
+
+        Returns a tuple:
+          capacity_peak_to_peak_ah: peak to peak capacity in Ah
+          right_peak_height_v_per_ah: height of the right peak. This might be
+                                      some indicator of SEI uniformity?
+
+        """
+
+        df = self.get_formation_test_final_c20_charge()
+
+        capacity = df['Charge Capacity (Ah)'].values
+        voltage = df['Potential (V)'].values
+
+        # Exclude values above 1.5Ah from this analysis.
+        to_keep = capacity < 1.25
+        voltage = voltage[to_keep]
+        capacity = capacity[to_keep]
+
+        dvdq = np.gradient(voltage)/np.gradient(capacity)
+
+        dvdq_smoothed = savgol_filter(dvdq, 5, 3)
+
+        idx_peaks, properties = find_peaks(dvdq_smoothed, height=0.35, prominence=0.005)
+
+
+        # Discard first if there are three peaks
+        if len(idx_peaks) == 3:
+            idx_peaks = idx_peaks[1::]
+            properties['peak_heights'] = properties['peak_heights'][1::]
+
+        assert len(idx_peaks) == 2, "Too many peaks found."
+
+        capacity_peak_to_peak_ah = capacity[idx_peaks[-1]] - capacity[idx_peaks[0]]
+
+        assert capacity_peak_to_peak_ah > 0, "Something went wrong with the peak indexing."
+
+        if to_plot:
+            plt.figure()
+            plt.plot(capacity, dvdq_smoothed)
+            plt.plot(capacity[idx_peaks], dvdq_smoothed[idx_peaks], 'o')
+            plt.ylim((0.1, 0.7))
+            plt.xlabel('Charge Capacity (Ah)')
+            plt.ylabel('dV/dQ (V/Ah)')
+            plt.savefig(f'qpp_cell_{self.cellid}.png')
+            plt.close()
+
+        right_peak_height_v_per_ah = properties['peak_heights'][-1]
+
+        return capacity_peak_to_peak_ah, right_peak_height_v_per_ah
+
+
+    def get_formation_test_final_c20_discharge(self):
+        """
+        Return DataFrame for the final C/20 discharge from the formation test
+        """
+
+        df = self.get_formation_data()
+
+        if self.is_baseline_formation():
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number'])
+            step_index_c20_discharge = STEP_INDEX_FORMATION_C20_DISCHARGE_BASELINE
+        else:
+            CYCLE_INDEX_LAST = np.max(df['Cycle Number']) - 1
+            step_index_c20_discharge = STEP_INDEX_FORMATION_C20_DISCHARGE_FAST
+
+        df_c20_discharge = df[(df['Cycle Number'] == CYCLE_INDEX_LAST) &
+                              (df['Step Index'] == step_index_c20_discharge)]
+
+        return df_c20_discharge
+
+
+
     def get_formation_test_summary_statistics(self):
         """
         Return summary statistics from the formation cycle
@@ -391,15 +530,44 @@ class FormationCell:
         if self.is_baseline_formation():
             CYCLE_INDEX_LAST = np.max(df['Cycle Number'])
             step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_BASELINE
+            step_index_first_discharge = STEP_INDEX_FORMATION_FIRST_DISCHARGE_BASELINE
+            step_index_first_discharge_rest = STEP_INDEX_FORMATION_FIRST_DISCHARGE_REST_BASELINE
         else:
             CYCLE_INDEX_LAST = np.max(df['Cycle Number']) - 1
             step_index_c20_charge = STEP_INDEX_FORMATION_C20_CHARGE_FAST
+            step_index_first_discharge = STEP_INDEX_FORMATION_FIRST_DISCHARGE_FAST
+            step_index_first_discharge_rest = STEP_INDEX_FORMATION_FIRST_DISCHARGE_REST_FAST
 
         df_first_cycle = df[df['Cycle Number'] == 1]
         df_last_cycle = df[df['Cycle Number'] == CYCLE_INDEX_LAST]
 
         df_c20_charge = df[(df['Cycle Number'] == CYCLE_INDEX_LAST) &
                            (df['Step Index'] == step_index_c20_charge)]
+
+        df_first_discharge = df[(df['Step Index'] == step_index_first_discharge)]
+
+        # Extract "capacity below 3.2V" metric as a proxy to low-SOC resistance
+        idx_below_3p2v = np.where(df_first_discharge['Potential (V)'] < 3.2)[0]
+        cap_vec_below_3p2v = df_first_discharge['Discharge Capacity (Ah)'].iloc[idx_below_3p2v]
+        res_dict['form_first_discharge_capacity_below_3p2v_ah'] = cap_vec_below_3p2v.iloc[-1] - cap_vec_below_3p2v.iloc[0]
+
+        # Extract "voltage rebound after initial discharge" as a proxy to low-SOC resistance
+        if step_index_first_discharge_rest:
+            df_first_discharge_rest = df[(df['Step Index'] == step_index_first_discharge_rest) &
+                                         (df['Cycle Number'] == 1)]
+
+            rest_voltage_arr = df_first_discharge_rest['Potential (V)']
+            rest_time_arr = df_first_discharge_rest['Step Time (s)']
+
+            first_discharge_rest_interpolant = interpolate.interp1d(rest_time_arr, rest_voltage_arr)
+            res_dict['form_first_discharge_rest_voltage_rebound_1s'] = first_discharge_rest_interpolant(1).tolist()
+            res_dict['form_first_discharge_rest_voltage_rebound_10s'] = first_discharge_rest_interpolant(10).tolist()
+            res_dict['form_first_discharge_rest_voltage_rebound_1800s'] = first_discharge_rest_interpolant(1800).tolist()
+        else:
+            # No data! Return empty
+            res_dict['form_first_discharge_rest_voltage_rebound_1s'] = np.nan
+            res_dict['form_first_discharge_rest_voltage_rebound_10s'] = np.nan
+            res_dict['form_first_discharge_rest_voltage_rebound_1800s'] = np.nan
 
         # Extract voltage trace from the top of the C/20 charge preceding the
         # 6-hour voltage decay. PAttia suggested using the shape of this curve
@@ -409,7 +577,19 @@ class FormationCell:
         MIN_VOLTAGE = 4.1
         c20_charge_voltage_end_vec = df_c20_charge['Potential (V)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
         c20_charge_capacity_end_vec = df_c20_charge['Charge Capacity (Ah)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
+        res_dict['form_last_charge_voltage_trace_cap_ah'] = c20_charge_capacity_end_vec
+        res_dict['form_last_charge_voltage_trace_voltage_v'] = c20_charge_voltage_end_vec
 
+        # Try to get the "10s resistance" from the C/20 charge step. This is a
+        # pseudo-resistance since there is no real rest here and the preceding
+        # step includes a bunch of voltage polarization. But this is the best we
+        # might be able to do.
+        voltage_interpolant = interpolate.interp1d(df_c20_charge['Step Time (s)'], df_c20_charge['Potential (V)'])
+        res_dict['form_last_charge_voltage_after_1s'] = voltage_interpolant(1).tolist()
+        res_dict['form_last_charge_voltage_after_10s'] = voltage_interpolant(10).tolist()
+        res_dict['form_last_charge_voltage_after_60s'] = voltage_interpolant(60).tolist()
+
+        # More aggregate variables
         res_dict['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
         res_dict['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
         res_dict['form_first_cycle_efficiency'] = res_dict['form_first_discharge_capacity_ah'] / \
@@ -446,12 +626,6 @@ class FormationCell:
         volts_per_second = stats.linregress(x_initial, y_initial)[0]
         mv_per_sec_initial = volts_per_second * 1000
 
-        # Sanity check
-        # plt.figure()
-        # plt.plot(x, y, x, y_smoothed)
-        # plt.show()
-        # plt.savefig('test.png')
-
 
         # Process current bump signal during first CV hold step
         STEP_INDEX_FIRST_CV_HOLD = 4 if self.is_baseline_formation() else 5
@@ -462,14 +636,17 @@ class FormationCell:
         cv_hold_capacity = df_first_cv_hold['Charge Capacity (Ah)'].iloc[-1] - \
                            df_first_cv_hold['Charge Capacity (Ah)'].iloc[0]
 
+        # Add info about the C/20 charge peak to peak distance
+        (c20_charge_qpp_ah, c20_charge_right_peak_v_per_ah) = self.get_formation_test_final_c20_charge_qpp()
+        res_dict['form_c20_charge_qpp_ah'] = c20_charge_qpp_ah
+        res_dict['form_c20_charge_right_peak_v_per_ah'] = c20_charge_right_peak_v_per_ah
+
         # Package the results
         res_dict['form_6hr_rest_delta_voltage_v'] = delta_voltage
         res_dict['form_6hr_rest_voltage_v'] = voltage_final
         res_dict['form_6hr_rest_mv_per_day_steady'] = mv_per_day_steady
         res_dict['form_6hr_rest_mv_per_sec_initial'] = mv_per_sec_initial
         res_dict['form_first_cv_hold_capacity_ah'] = cv_hold_capacity
-        res_dict['form_last_charge_voltage_trace_cap_ah'] = c20_charge_capacity_end_vec
-        res_dict['form_last_charge_voltage_trace_voltage_v'] = c20_charge_voltage_end_vec
 
         return res_dict
 
@@ -478,46 +655,54 @@ class FormationCell:
         """
         Compute the variance in Q metric as reported by Seversen et al. from the
         2019 Nature Energy paper.
+
+        Returns:
+            a dictionary with keys as variable name and values as var(q)
         """
 
-        CYC_DVDQ_FRESH = 3
-        CYC_DVDQ_FIRST_AGED = 56
         result_list = self.process_diagnostic_c20_data()
 
-        # Make sure the dataset consists of the same set of cycles. If this is
-        # false, the analysis may still work but we need to be more careful
-        # about how we index into the data. For now let's catch and fail exceptions.
-        assert result_list[0]['cycle_index'] == CYC_DVDQ_FRESH
-        assert result_list[1]['cycle_index'] == CYC_DVDQ_FIRST_AGED
+        var_q_dict = dict()
 
-        q0 = result_list[0]['dch_capacity']
-        v0 = result_list[0]['dch_voltage']
+        for result in result_list[1::]:
 
-        q1 = result_list[1]['dch_capacity']
-        v1 = result_list[1]['dch_voltage']
+            q0 = result_list[0]['dch_capacity']
+            v0 = result_list[0]['dch_voltage']
+            cyc0 = result_list[0]['cycle_index']
 
-        f0 = interpolate.interp1d(v0, q0, fill_value='extrapolate')
-        f1 = interpolate.interp1d(v1, q1, fill_value='extrapolate')
+            q1 = result['dch_capacity']
+            v1 = result['dch_voltage']
+            cyc1 = result['cycle_index']
 
-        v_shared = np.linspace(4.2, 3.0, 250)
-        q0_interp = f0(v_shared)
-        q1_interp = f1(v_shared)
+            if q1.empty:
+                continue
 
-        delta_q = q0_interp - q1_interp
-        var_q = np.var(delta_q)
+            f0 = interpolate.interp1d(v0, q0, fill_value='extrapolate')
+            f1 = interpolate.interp1d(v1, q1, fill_value='extrapolate')
 
-        if to_plot:
-            plt.figure()
-            plt.plot(delta_q, v_shared)
-            plt.xlabel('Capacity (Ah)')
-            plt.ylabel('Voltage (V)')
-            plt.title(f'Cell {self.cellid}')
+            v_shared = np.linspace(4.2, 3.0, 250)
+            q0_interp = f0(v_shared)
+            q1_interp = f1(v_shared)
 
-            plt.savefig(f'output/debug/var_q_cell_{self.cellid}')
+            delta_q = q0_interp - q1_interp
+            var_q = np.var(delta_q)
 
-            print('VarQ figure has been exported.')
+            var_name = f'var_q_c{cyc1}_c{cyc0}'
 
-        return var_q
+            var_q_dict[var_name] = var_q
+
+            if to_plot:
+                plt.figure()
+                plt.plot(delta_q, v_shared)
+                plt.xlabel('Capacity (Ah)')
+                plt.ylabel('Voltage (V)')
+                plt.title(f'Cell {self.cellid}')
+
+                plt.savefig(f'output/debug/var_q_cell_{self.cellid}_{var_name}')
+
+                print('VarQ figure has been exported.')
+
+        return var_q_dict
 
 
     def get_aging_test_summary_statistics(self):
@@ -565,17 +750,20 @@ class FormationCell:
         df = pd.Series(capacity_retention)
         capacity_retention = df.interpolate(method='linear').bfill().to_numpy()
 
-        stats['var_q_56_3'] = self.calculate_var_q()
-
         # EOL metrics
         stats['cycles_to_50_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.5)
         stats['cycles_to_60_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.6)
         stats['cycles_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.7)
         stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
 
+        # VarQ metrics
+        var_q_dict = self.calculate_var_q()
+        for key in var_q_dict:
+            stats[key] = var_q_dict[key]
+
         # Capacity retention and cell resistance at different cycle numbers
         # Cycle #3 corresponds to the first available cycle
-        cycle_target_list = [3, 100, 200, 300, 350, 400, 450, 500]
+        cycle_target_list = [3, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
 
         for cycle_target in cycle_target_list:
 
@@ -652,6 +840,45 @@ class FormationCell:
         stats = pd.DataFrame(stats)
 
         return (stats, soc_target_list)
+
+    def process_diagnostic_4p2v_voltage_decay(self):
+        """
+        Takes in raw data and returns summary statistics of the
+        1-hour voltage decay starting from 4.2V, following the C/20 charge cycle
+        in each RPT.
+
+        Returns a list of dictionaries. Each dictionary holds:
+          - cycle_index: cycle index containing the voltage decay data
+          - voltage decay: measured 1-hour voltage decay from 4.2V
+        """
+
+        df = self.get_aging_data_timeseries()
+
+        df_voltage_decay = df[df['Step Index'] == 15]
+
+        cycle_indices = np.unique(df_voltage_decay['Cycle Number'])
+
+        results_list = list()
+
+        VOLTAGE_MAXIMUM = 4.2
+
+        for curr_cyc in cycle_indices:
+
+            curr_df = df[df['Cycle Number'] == curr_cyc]
+
+            voltage = curr_df['Potential (V)']
+
+            voltage_smoothed = savgol_filter(voltage, 41, 3)
+            voltage_final = voltage_smoothed[-1]
+            delta_voltage = VOLTAGE_MAXIMUM - voltage_final
+
+            curr_result = dict()
+            curr_result['cycle_index'] = curr_cyc
+            curr_result['delta_voltage'] = delta_voltage
+
+            results_list.append(curr_result)
+
+        return results_list
 
 
     def process_diagnostic_hppc_data(self):
@@ -748,7 +975,8 @@ Helper Functions
 
 def export_all_c20_data():
     """
-    Dumps all C/20 charge and discharge data into the current directory.
+    Dumps all C/20 charge and discharge data from the RPTs into the current
+    directory.
     """
 
     for cellid in range(1, NUM_TOTAL_CELLS + 1):
@@ -776,12 +1004,21 @@ def find_cycles_to_target_retention(retention, cyc_number, target_retention):
     return cyc_number[np.where(retention < target_retention)[0][0]]
 
 
-
 if __name__ == "__main__":
 
     # Simple test cases
-    cell = FormationCell(36)
+
+    for cellid in list(range(1, 41)):
+        cell = FormationCell(cellid)
+        cell.get_formation_test_final_c20_charge_qpp()
+
+    cell = FormationCell(1)
+    cell.get_esoh_fitting_data()
     cell.calculate_var_q()
     cell.summarize_hppc_pulse_statistics()
+    cell.get_aging_data_cycles()
+    cell.get_aging_test_summary_statistics()
     cell.get_formation_test_summary_statistics()
+    cell.process_diagnostic_4p2v_voltage_decay()
+    cell.get_formation_test_final_c20_charge_qpp()
     cell.get_metadata()
