@@ -8,7 +8,7 @@ function process_voltage_curves()
 
     % Set paths
     input_path = 'data/2020-10-diagnostic-test-c20';
-    output_path = 'output/2020-08-microformation-esoh-fits';
+    output_path = 'output/2021-04-12-formation-esoh-fits-y100-free';
 
     cellid_array = 1:1:40;
 
@@ -67,6 +67,8 @@ function process_voltage_curves()
             % Run the eSOH algorithm(s) to get the results file
             res = run_esoh(raw_data, Un, Up);
 
+            write_to_json(res, output_path, output_filename)
+            
             % Do the recalibration
             if TO_RECALIBRATE
                  [Un, Up] = recalibrate(raw_data.voltage, raw_data.charge_capacity, ...
@@ -198,5 +200,15 @@ function result = soh_parameters_to_string_2(res)
     result = sprintf(['Q_{full} = %.2f Ah, C_{n,e} = %.2f Ah, C_{p,e} = %.2f Ah, '...
                       'Q_{comp} = %.2f Ah, RMSE = %.1f mV'], ...
         res.Cf, res.Cn_excess, res.Cp_excess, Xt(5), res.RMSE_mV);
+
+end
+
+function write_to_json(res, output_path, output_filename)
+    % Writes the result struct to a json file
+
+    fid = fopen(sprintf('%s/%s.json', output_path, output_filename), 'w');
+    encoded_json = jsonencode(res);
+    fprintf(fid, encoded_json);  
+    fclose(fid);
 
 end
