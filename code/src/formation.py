@@ -763,7 +763,7 @@ class FormationCell:
 
         # Capacity retention and cell resistance at different cycle numbers
         # Cycle #3 corresponds to the first available cycle
-        cycle_target_list = [3, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+        cycle_target_list = [3, 50, 56, 100, 150, 159, 200, 250, 262, 300, 350, 365, 400, 450]
 
         for cycle_target in cycle_target_list:
 
