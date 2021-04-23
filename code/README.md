@@ -16,6 +16,7 @@ This directory contains source code used to process data for the formation proje
   - `test_formation.py`: make sure all tests pass if you want to use `formation.py`
 
 The root directory also contains a bunch of IPython Notebooks, including:
+
 - `build_figures.ipynb`: used to make figures for Paper 1
 - `build_regression_model.ipynb`: used to train the linear regression model for Paper 1
 - `process_all_data.ipynb`: 
