@@ -17,13 +17,20 @@ PATH_METADATA   = 'documents/cell_tracker.xlsx'
 PATH_ESOH_SUMMARY = 'output/2021-04-12-formation-esoh-fits-y100-free/summary_esoh_table.csv'
 PATH_ESOH_DATA = 'output/2021-04-12-formation-esoh-fits-y100-free'
 
-# Configure step indices during cycling
+# Configure step indices during cycling RPTs
 STEP_INDEX_C3_CHARGE = 7
 STEP_INDEX_C3_DISCHARGE = 10
 STEP_INDEX_C20_CHARGE = 13
 STEP_INDEX_C20_DISCHARGE = 16
 STEP_INDEX_HPPC_CHARGE = 22
 STEP_INDEX_HPPC_DISCHARGE = 24
+
+# Configure step indices during cycling 1C charge-discharges
+STEP_INDEX_CYCLING_CHARGE_CC = 30
+STEP_INDEX_CYCLING_CHARGE_CV = 31
+STEP_INDEX_CYCLING_CHARGE_REST = 32
+STEP_INDEX_CYCLING_DISCHARGE_CC = 33
+STEP_INDEX_CYCLING_DISCHARGE_REST = 34
 
 # Configure step indices during formation
 STEP_INDEX_FORMATION_C20_CHARGE_BASELINE = 10
@@ -317,6 +324,27 @@ class FormationCell:
         self._df_cycles = df
 
 
+    def get_aging_data_discharge_curve(self, cycle_index):
+        """
+        Return discharge voltage curve for a particular cycle index
+
+        Args:
+           cycle index (int):
+
+        Returns:
+           Pandas DataFrame containing only the data for this cycle
+        """
+
+        df = self.get_aging_data_timeseries()
+
+        df = df[ (df['Cycle Number'] == cycle_index) & \
+                 (df['Step Index'] == STEP_INDEX_CYCLING_DISCHARGE_CC) ]
+
+        assert not df.empty, f'No data found for cycle index {cycle_index}'
+
+        return df
+
+
     def export_diagnostic_c20_data(self):
         """
         Writes csv files to disk containing the raw C/20 voltage data
@@ -368,12 +396,12 @@ class FormationCell:
             curr_dict = dict()
 
             curr_dict['cycle_index'] = idx_cyc
-            curr_dict['chg_capacity'] = df_chg['Charge Capacity (Ah)']
-            curr_dict['chg_voltage'] = df_chg['Potential (V)']
-            curr_dict['chg_dvdq'] = 1/df_chg['dQ/dV (Ah/V)']
-            curr_dict['dch_capacity'] = df_dch['Discharge Capacity (Ah)']
-            curr_dict['dch_voltage'] = df_dch['Potential (V)']
-            curr_dict['dch_dvdq'] = 1/df_dch['dQ/dV (Ah/V)']
+            curr_dict['chg_capacity'] = df_chg['Charge Capacity (Ah)'].astype('float')
+            curr_dict['chg_voltage'] = df_chg['Potential (V)'].astype('float')
+            curr_dict['chg_dvdq'] = 1/df_chg['dQ/dV (Ah/V)'].astype('float')
+            curr_dict['dch_capacity'] = df_dch['Discharge Capacity (Ah)'].astype('float')
+            curr_dict['dch_voltage'] = df_dch['Potential (V)'].astype('float')
+            curr_dict['dch_dvdq'] = 1/df_dch['dQ/dV (Ah/V)'].astype('float')
 
             results.append(curr_dict)
 
@@ -549,6 +577,11 @@ class FormationCell:
         # Extract "capacity below 3.2V" metric as a proxy to low-SOC resistance
         idx_below_3p2v = np.where(df_first_discharge['Potential (V)'] < 3.2)[0]
         cap_vec_below_3p2v = df_first_discharge['Discharge Capacity (Ah)'].iloc[idx_below_3p2v]
+
+        # (*) : different between baseline and fast formation
+        # (+) : probably comparable between baseline and fast formation
+
+        # (*) DEF: pseudo-capacity below 3.2V during first discharge (proxy for low-SOC resistance)
         res_dict['form_first_discharge_capacity_below_3p2v_ah'] = cap_vec_below_3p2v.iloc[-1] - cap_vec_below_3p2v.iloc[0]
 
         # Extract "voltage rebound after initial discharge" as a proxy to low-SOC resistance
@@ -560,16 +593,23 @@ class FormationCell:
             rest_time_arr = df_first_discharge_rest['Step Time (s)']
 
             first_discharge_rest_interpolant = interpolate.interp1d(rest_time_arr, rest_voltage_arr)
+
+            # (*) DEF: Voltage rebound after initial discharge, 1 second
             res_dict['form_first_discharge_rest_voltage_rebound_1s'] = first_discharge_rest_interpolant(1).tolist()
+
+            # (*) DEF: Voltage rebound after initial discharge, 10 seconds
             res_dict['form_first_discharge_rest_voltage_rebound_10s'] = first_discharge_rest_interpolant(10).tolist()
+
+            # (*) DEF: Voltage rebound after initial discharge, 30 minutes
             res_dict['form_first_discharge_rest_voltage_rebound_1800s'] = first_discharge_rest_interpolant(1800).tolist()
+
         else:
             # No data! Return empty
             res_dict['form_first_discharge_rest_voltage_rebound_1s'] = np.nan
             res_dict['form_first_discharge_rest_voltage_rebound_10s'] = np.nan
             res_dict['form_first_discharge_rest_voltage_rebound_1800s'] = np.nan
 
-        # Extract voltage trace from the top of the C/20 charge preceding the
+        # Extract voltage trace from the top of the C/10 charge preceding the
         # 6-hour voltage decay. PAttia suggested using the shape of this curve
         # to determine if the voltage decay is related to shifts in the voltage
         # curve, e.g. due to relative stoic realignment between positive and
@@ -577,6 +617,8 @@ class FormationCell:
         MIN_VOLTAGE = 4.1
         c20_charge_voltage_end_vec = df_c20_charge['Potential (V)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
         c20_charge_capacity_end_vec = df_c20_charge['Charge Capacity (Ah)'][df_c20_charge['Potential (V)'] > MIN_VOLTAGE]
+
+        # (*) DEF: (Q, V) data-series from the C/10 charge curve preceding the 6-hour voltage decay
         res_dict['form_last_charge_voltage_trace_cap_ah'] = c20_charge_capacity_end_vec
         res_dict['form_last_charge_voltage_trace_voltage_v'] = c20_charge_voltage_end_vec
 
@@ -585,18 +627,31 @@ class FormationCell:
         # step includes a bunch of voltage polarization. But this is the best we
         # might be able to do.
         voltage_interpolant = interpolate.interp1d(df_c20_charge['Step Time (s)'], df_c20_charge['Potential (V)'])
+
+        # (*) DEF: Voltage after 1s of charging at C/10 from 0% SOC (pseudo-resistance)
         res_dict['form_last_charge_voltage_after_1s'] = voltage_interpolant(1).tolist()
+
+        # (*) DEF: Voltage after 10s of charging at C/10 from 0% SOC (pseudo-resistance)
         res_dict['form_last_charge_voltage_after_10s'] = voltage_interpolant(10).tolist()
+
+        # (*) DEF: Voltage after 60s of charging at C/10 from 0% SOC (pseudo-resistance)
         res_dict['form_last_charge_voltage_after_60s'] = voltage_interpolant(60).tolist()
 
         # More aggregate variables
+
+        # (*) DEF: Charge capacity of the very first cycle (Ah)
         res_dict['form_first_charge_capacity_ah'] = np.max(df_first_cycle['Charge Capacity (Ah)'])
+
+        # (*) DEF: Discharge capacity of the very first cycle (Ah)
         res_dict['form_first_discharge_capacity_ah'] = np.max(df_first_cycle['Discharge Capacity (Ah)'])
+
+        # (*) DEF: Ratio of charge and discharge capacity for the very first cycle
         res_dict['form_first_cycle_efficiency'] = res_dict['form_first_discharge_capacity_ah'] / \
                                                   res_dict['form_first_charge_capacity_ah']
 
+        # (+) DEF: Discharge capacity corresponding to the very last cycle of
+        #         formation (C/10 for both profiles)
         res_dict['form_final_discharge_capacity_ah'] = np.max(df_last_cycle['Discharge Capacity (Ah)'])
-
 
         # Process voltage decay signal during 12-hour rest step
         STEP_INDEX_6HR_REST = 12 if self.is_baseline_formation() else 13
@@ -613,6 +668,19 @@ class FormationCell:
         y_smoothed = savgol_filter(y, 41, 3)
         voltage_final = y_smoothed[-1]
         delta_voltage = VOLTAGE_MAXIMUM - voltage_final
+
+        # Extract the voltage drop for different time cutoffs
+        # e.g. 0 to 1 hour, 0 to 2 hours
+        for time_cutoff_hr in [1, 2, 3, 4, 5, 6]:
+            these_voltages = y_smoothed[x < time_cutoff_hr * 3600]
+            res_dict[f'form_6hr_rest_delta_voltage_v_0_to_{time_cutoff_hr}_hr'] = \
+                y_smoothed[0] - these_voltages[-1]
+
+        for time_cutoff_hr in [0, 1, 2, 3, 4, 5]:
+            these_voltages = y_smoothed[x > time_cutoff_hr * 3600]
+            final_voltage = y_smoothed[-1]
+            res_dict[f'form_6hr_rest_delta_voltage_v_{time_cutoff_hr}_to_6_hr'] = \
+                these_voltages[0] - final_voltage
 
         # Estimate steady-state dV/dt using data from the last two hours
         x_steady = x[x > 4 * 3600]
@@ -638,26 +706,97 @@ class FormationCell:
 
         # Add info about the C/20 charge peak to peak distance
         (c20_charge_qpp_ah, c20_charge_right_peak_v_per_ah) = self.get_formation_test_final_c20_charge_qpp()
+
+        # (+) DEF: C/10 charge dV/dQ peak-to-peak distance (Ah)
+        #      There is a typo in the variable name
         res_dict['form_c20_charge_qpp_ah'] = c20_charge_qpp_ah
+
+        # (+) DEF: C/10 charge dV/dQ right peak height (V/Ah)
+        # .    There is a typo in the variable name
         res_dict['form_c20_charge_right_peak_v_per_ah'] = c20_charge_right_peak_v_per_ah
 
-        # Package the results
+        # (+) DEF: Delta voltage after 6 hour rest at 100% SOC (preceded by a C/100 CV cut)
         res_dict['form_6hr_rest_delta_voltage_v'] = delta_voltage
+
+        # (+) DEF: Final voltage after 6 hour rest at 100% SOC (preceded by a C/100 CV cut)
         res_dict['form_6hr_rest_voltage_v'] = voltage_final
+
+        # (+) DEF: Steady-state voltage decay rate after 6 hour rest at 100% SOC (mV/day)
+        #     (Averaged over last 2 hours)
         res_dict['form_6hr_rest_mv_per_day_steady'] = mv_per_day_steady
+
+        # (+) DEF: Initial voltage drop rate after 6 hour rest at 100% SOC (mV/sec)
+        #      (Averaged over first 15 minutes)
         res_dict['form_6hr_rest_mv_per_sec_initial'] = mv_per_sec_initial
+
+        # (+) DEF: First cycle CV hold capacity (Ah)
         res_dict['form_first_cv_hold_capacity_ah'] = cv_hold_capacity
 
         return res_dict
 
 
-    def calculate_var_q(self, to_plot=False):
+    def calculate_var_q_from_cycling(self, cyc1, cyc0, to_plot=False):
+        """
+        Compute the variance in Q metric as reported by Severson et al. from the
+        2019 Nature Energy paper.
+
+        Use the discharge capacity data from the 1C discharges during cycling
+
+        Metric is computed as Var (Delta Q (V)) _ (cyc1 -> cyc0)
+        Args:
+          cyc1 (int): final cycle
+          cyc0 (int): initial cycle
+
+        Returns:
+          a Dictionary containing:
+            - voltage (vector)
+            - delta q (vector)
+            - var q (scalar)
+        """
+
+        assert cyc1 > cyc0, 'Final cycle must be greater than initial cycle'
+
+        df1 = self.get_aging_data_discharge_curve(cyc1)
+        df0 = self.get_aging_data_discharge_curve(cyc0)
+
+        v0 = df0['Potential (V)']
+        v1 = df1['Potential (V)']
+
+        q0 = df0['Discharge Capacity (Ah)']
+        q1 = df1['Discharge Capacity (Ah)']
+
+        f0 = interpolate.interp1d(v0, q0, fill_value='extrapolate')
+        f1 = interpolate.interp1d(v1, q1, fill_value='extrapolate')
+
+        v_shared = np.linspace(4.2, 3.0, 250)
+
+        q0_interp = f0(v_shared)
+        q1_interp = f1(v_shared)
+
+        delta_q = q0_interp - q1_interp
+        var_q = np.var(delta_q)
+
+        var_q_dict = dict()
+
+        var_q_dict[f'var_q_1c_c{cyc1}_c{cyc0}_ah'] = var_q
+        var_q_dict[f'var_q_1c_c{cyc1}_c{cyc0}_delta_q'] = delta_q
+        var_q_dict[f'var_q_1c_c{cyc1}_c{cyc0}_voltage_v'] = v_shared
+
+        return var_q_dict
+
+
+    def calculate_var_q_c20_discharge(self, to_plot=False):
         """
         Compute the variance in Q metric as reported by Seversen et al. from the
         2019 Nature Energy paper.
 
+        Use the C/20 discharge capacity from the RPTs during cycling
+
         Returns:
-            a dictionary with keys as variable name and values as var(q)
+            a Dictionary containing:
+              - voltage (vector)
+              - delta q (vector)
+              - var q (scalar)
         """
 
         result_list = self.process_diagnostic_c20_data()
@@ -687,9 +826,9 @@ class FormationCell:
             delta_q = q0_interp - q1_interp
             var_q = np.var(delta_q)
 
-            var_name = f'var_q_c{cyc1}_c{cyc0}'
-
-            var_q_dict[var_name] = var_q
+            var_q_dict[f'var_q_c20_c{cyc1}_c{cyc0}_ah'] = var_q
+            var_q_dict[f'var_q_c20_c{cyc1}_c{cyc0}_delta_q'] = delta_q
+            var_q_dict[f'var_q_c20_c{cyc1}_c{cyc0}_voltage_v'] = v_shared
 
             if to_plot:
                 plt.figure()
@@ -757,7 +896,11 @@ class FormationCell:
         stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
 
         # VarQ metrics
-        var_q_dict = self.calculate_var_q()
+        var_q_dict = self.calculate_var_q_c20_discharge()
+        for key in var_q_dict:
+            stats[key] = var_q_dict[key]
+
+        var_q_dict = self.calculate_var_q_from_cycling(100, 10)
         for key in var_q_dict:
             stats[key] = var_q_dict[key]
 
@@ -1014,7 +1157,8 @@ if __name__ == "__main__":
 
     cell = FormationCell(1)
     cell.get_esoh_fitting_data()
-    cell.calculate_var_q()
+    cell.get_aging_data_discharge_curve(5)
+    cell.calculate_var_q_from_cycling(100, 10)
     cell.summarize_hppc_pulse_statistics()
     cell.get_aging_data_cycles()
     cell.get_aging_test_summary_statistics()
