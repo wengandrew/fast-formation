@@ -8,7 +8,7 @@ function process_voltage_curves()
 
     % Set paths
     input_path = 'data/2020-10-diagnostic-test-c20';
-    output_path = 'output/2021-04-12-formation-esoh-fits-y100-free';
+    output_path = 'output/2021-04-12-formation-esoh-fits';
 
     cellid_array = 1:1:40;
 
@@ -164,7 +164,7 @@ function process_voltage_curves()
             'LLI', 'LAM_PE', 'LAM_NE', 'C20_loss', ...
             'Cn_pf', 'x100_pf'});
 
-    writetable(results_table, 'summary_esoh_table.csv');
+    writetable(results_table, 'output/summary_esoh_table.csv');
 
     plot_summary_esoh_table();
 

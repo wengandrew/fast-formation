@@ -11,12 +11,9 @@ assert os.path.basename(os.getcwd()) == 'project-formation'
 
 from src.formation import FormationCell
 
-
 PATH_OUTPUT = 'output'
-PATH_ESOH = 'output/2020-10-esoh-results-summary/y100-fix/summary_esoh_table.csv'
+PATH_ESOH = 'output/summary_esoh_table.csv'
 PATH_CORR = 'output/correlation_data.csv'
-OUTPUT_PATH_CORRELATIONS_TABLE = 'output/2021-03-fast-formation-esoh-fits'
-
 IDX_ESOH_FRESH_CYCLE = 3
 IDX_ESOH_AGED_CYCLE = 56
 
@@ -153,7 +150,7 @@ def get_label_registry():
     return label_registry
 
 
-def export_correlation_table(output_path=OUTPUT_PATH_CORRELATIONS_TABLE):
+def export_correlation_table(output_path=PATH_CORR):
     """
     Export the table of correlation features
 
@@ -166,10 +163,8 @@ def export_correlation_table(output_path=OUTPUT_PATH_CORRELATIONS_TABLE):
     None
     """
 
-    filename = 'correlation_data.csv'
-
     df = build_correlation_table()
-    df.to_csv(f'{output_path}/{filename}')
+    df.to_csv(f'{output_path}')
 
 
 def build_correlation_table():

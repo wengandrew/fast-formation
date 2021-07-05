@@ -12,8 +12,8 @@ PATH_CYCLE      = 'data/2020-10-aging-test-cycles'
 PATH_TIMESERIES = 'data/2020-10-aging-test-timeseries'
 PATH_FORMATION  = 'data/2020-06-microformation-timeseries'
 PATH_METADATA   = 'documents/cell_tracker.xlsx'
-PATH_ESOH_SUMMARY = 'output/2021-04-12-formation-esoh-fits-y100-free/summary_esoh_table.csv'
-PATH_ESOH_DATA = 'output/2021-04-12-formation-esoh-fits-y100-free'
+PATH_ESOH_SUMMARY = 'output/summary_esoh_table.csv'
+PATH_ESOH_DATA = 'output/2021-04-12-formation-esoh-fits'
 
 # Configure step indices during cycling RPTs
 STEP_INDEX_C3_CHARGE = 7
