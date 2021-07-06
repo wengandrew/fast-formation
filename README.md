@@ -17,7 +17,7 @@ Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
 - `data/...microformation.../`: data from formation cycles, exported from Voltaiq
 - `data/...aging.../`: data from aging tests, exported from Voltaiq
 - `data/...diagnostic/`: post-processed from aging test data
-- `documents/`: reference documentsc
+- `documents/`: reference documents
 - `output/`: processed data output (e.g. eSOH fit results, features extracted)
 
 
