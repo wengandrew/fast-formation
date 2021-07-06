@@ -43,7 +43,6 @@ Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
 MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
 algorithm used to generate the equilibrium potential toy model. 
 
-
 #### RStudio
 
 RStudio is used to run the test for the differences in the coefficients of 
