@@ -103,6 +103,8 @@ def get_label_registry():
     label_registry[f'dcr_10s_90_soc_at_c3']  = (f'$R_{{10s, 90\% SOC}}$ $(\\Omega)$', (0.025, 0.055))
     label_registry[f'dcr_10s_5_soc_at_c3']  = (f'$R_{{10s, 5\% SOC}}$ $(\\Omega)$', (0.025, 0.055))
     label_registry[f'dcr_10s_5_soc_at_c3']  = (f'$R_{{10s, 5\% SOC}}$ $(\\Omega)$', (0.025, 0.055))
+    label_registry[f'dcr_10s_5_soc_at_c3_chg']  = (f'$R^{{\mathrm{{CHG}}}}_{{10s, 5\% SOC}}$ $(\\Omega)$', (0.025, 0.055))
+    label_registry[f'dcr_10s_0_soc_at_c3_chg']  = (f'$R^{{\mathrm{{CHG}}}}_{{10s, 4\% SOC}}$ $(\\Omega)$', (0.025, 0.055))
     label_registry[f'dcr_10s_90_soc_at_c3'] = (f'$R_{{10s, 90\% SOC}}$ $(\\Omega)$', (None, None))
     label_registry[f'dcr_10s_0_soc_at_c3']  = (f'$R_{{10s, 4\% SOC}}$ $(\\Omega)$', (None, None))
     label_registry[f'dcr_10s_10_soc_at_c3'] = (f'$R_{{10s, 10\% SOC}}$ $(\\Omega)$', (None, None))
@@ -144,6 +146,7 @@ def get_label_registry():
     label_registry['form_coulombic_efficiency'] = ('$\mathrm{CE}_\mathrm{f}$', (None, None))
     label_registry['form_6hr_rest_mv_per_day_steady'] = ('$dV/dt_{ss}$ (mV/day)', (None, None))
     label_registry['form_first_cycle_efficiency'] = ('Form 1st Cyc Eff.', (None, None))
+    label_registry['form_first_charge_capacity_ah'] = ('$Q_c$', (None, None))
     label_registry['form_6hr_rest_delta_voltage_v'] = ('$\Delta V_{rest,6hr}$ (V)', (None, None))
     label_registry['rpt_c3_delta_v'] = ('$\Delta V_{1hr, RPT}, c3$ (V)', (None, None))
 

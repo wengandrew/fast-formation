@@ -11,7 +11,7 @@ function plot_figures()
     BLUE = [44 121 245]./255;
     GREEN = [0 0.75 0];
 
-    PATH_CORRELATION_FILE = 'output/2021-03-fast-formation-esoh-fits/correlation_data.csv';
+    PATH_CORRELATION_FILE = 'output/correlation_data.csv';
 
     
     set_default_plot_settings_manuscript()
@@ -20,7 +20,7 @@ function plot_figures()
 
 %    fig_aging_variable('average_voltage')
 %    fig_aging_variable('voltage_efficiency')
-   fig_aging_variable('discharge_energy')
+%    fig_aging_variable('discharge_energy')
 %    fig_aging_variable('discharge_capacity')
 %    fig_aging_variable('coulombic_efficiency')
 
@@ -31,8 +31,8 @@ function plot_figures()
 %    fig_initial_esoh_distributions()
 %    fig_thickness_distributions()
 %    fig_esoh_metrics()
-   fig_correlations()
-%    fig_dvdq_comparison()
+%    fig_correlations()
+   fig_dvdq_comparison()
 %    fig_temperature()
 
 end
