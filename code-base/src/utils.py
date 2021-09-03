@@ -141,12 +141,12 @@ def get_label_registry():
     label_registry['esoh_c365_neg_excess'] = ('Neg Excess, c365 (Ah)', (0.2, 0.7))
     label_registry['form_last_charge_voltage_after_1s'] = ('Form last chg V, 1s', (None, None))
     label_registry['form_final_discharge_capacity_ah'] = ('$Q_\mathrm{d}$ (Ah)', (None, None))
+    label_registry['form_first_charge_capacity_ah'] = ('$Q_\mathrm{c}$ (Ah)', (None, None))
     label_registry['form_first_discharge_capacity_below_3p2v_ah'] = ('$Q_d<3.2V (Ah)', (None, None))
     label_registry['form_qc_minus_qd_ah'] = ('$Q_\mathrm{LLI}$ (Ah)', (None, None))
     label_registry['form_coulombic_efficiency'] = ('$\mathrm{CE}_\mathrm{f}$', (None, None))
     label_registry['form_6hr_rest_mv_per_day_steady'] = ('$dV/dt_{ss}$ (mV/day)', (None, None))
     label_registry['form_first_cycle_efficiency'] = ('Form 1st Cyc Eff.', (None, None))
-    label_registry['form_first_charge_capacity_ah'] = ('$Q_c$', (None, None))
     label_registry['form_6hr_rest_delta_voltage_v'] = ('$\Delta V_{rest,6hr}$ (V)', (None, None))
     label_registry['rpt_c3_delta_v'] = ('$\Delta V_{1hr, RPT}, c3$ (V)', (None, None))
 
