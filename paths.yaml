@@ -1,0 +1,4 @@
+# Configure data and output directories for the fast formation project
+data: '~/Documents/fast-formation/data/'
+outputs: '~/Documents/fast-formation/output/'
+documents: '~/Documents/fast-formation/documents/'
