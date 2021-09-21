@@ -117,10 +117,10 @@ class TestParametrized:
 
         pass
 
-    def test_process_diagnostic_hppc_data(self, cell, request):
+    def test_process_diagnostic_hppc_discharge_data(self, cell, request):
 
         this_cell = request.getfixturevalue(cell)
-        results_list = this_cell.process_diagnostic_hppc_data()
+        results_list = this_cell.process_diagnostic_hppc_discharge_data()
 
         assert results_list
 
