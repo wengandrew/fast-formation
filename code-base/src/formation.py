@@ -3,9 +3,17 @@ import numpy as np
 import json
 import pandas as pd
 import natsort
+import os, sys
 from matplotlib import pyplot as plt
 from scipy import interpolate, stats
 from scipy.signal import find_peaks, savgol_filter
+
+if os.path.basename(os.getcwd()) == 'code-base':
+    os.chdir('../')
+sys.path.append('code-base')
+
+assert os.path.basename(os.getcwd()) == 'project-formation'
+
 
 # Configure paths
 PATH_CYCLE      = 'data/2020-10-aging-test-cycles'
@@ -42,6 +50,7 @@ STEP_INDEX_FORMATION_FIRST_DISCHARGE_REST_FAST = [] # Does not exist
 
 # This is a fixed number for this experiment
 NUM_TOTAL_CELLS = 40
+NOM_CAP_AH = 2.36 # Nominal cell capacity in Amp-hours
 
 class FormationCell:
     """
@@ -642,7 +651,8 @@ class FormationCell:
         # pseudo-resistance since there is no real rest here and the preceding
         # step includes a bunch of voltage polarization. But this is the best we
         # might be able to do.
-        voltage_interpolant = interpolate.interp1d(df_c20_charge['Step Time (s)'], df_c20_charge['Potential (V)'])
+        voltage_interpolant = interpolate.interp1d(df_c20_charge['Step Time (s)'],
+                                                   df_c20_charge['Potential (V)'])
 
         # (*) DEF: Voltage after 1s of charging at C/10 from 0% SOC (pseudo-resistance)
         res_dict['form_last_charge_voltage_after_1s'] = voltage_interpolant(1).tolist()
@@ -872,9 +882,11 @@ class FormationCell:
         df = self.get_aging_data_cycles()
 
         dch_capacity = df['Discharge Capacity (Ah)']
-        cyc_number   = df['Cycle Number']
+        cyc_number = df['Cycle Number']
+        ahah       = df['Cumulative Discharge Capacity (Ah)'] / NOM_CAP_AH
 
         (hppc_stats, dcr_soc_targets) = self.summarize_hppc_pulse_statistics()
+        (hppc_stats_chg, dcr_soc_targets_chg) = self.summarize_hppc_pulse_statistics('charge')
 
         initial_capacity = np.mean(dch_capacity[IDX_INIT_CAPACITY])
         capacity_retention = dch_capacity/initial_capacity
@@ -920,6 +932,11 @@ class FormationCell:
         stats['cycles_to_60_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.6)
         stats['cycles_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.7)
         stats['cycles_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, cyc_number, 0.8)
+
+        stats['ahah_to_50_pct'] = find_cycles_to_target_retention(capacity_retention, ahah, 0.5)
+        stats['ahah_to_60_pct'] = find_cycles_to_target_retention(capacity_retention, ahah, 0.6)
+        stats['ahah_to_70_pct'] = find_cycles_to_target_retention(capacity_retention, ahah, 0.7)
+        stats['ahah_to_80_pct'] = find_cycles_to_target_retention(capacity_retention, ahah, 0.8)
 
         # VarQ metrics
         var_q_dict = self.calculate_var_q_c20_discharge()
@@ -979,7 +996,7 @@ class FormationCell:
             curr_retention = np.interp(cycle_target, cyc_number, capacity_retention)
             stats[f'retention_at_c{cycle_target}'] = curr_retention
 
-            # Loop through the different SOCs for DCRs
+            # Loop through the different SOCs for DCRs on discharge
             for dcr_soc_target in dcr_soc_targets:
 
                 dcr_soc_target_int = int(dcr_soc_target*100)
@@ -994,9 +1011,26 @@ class FormationCell:
                 stats[f'dcr_3s_{dcr_soc_target_int}_soc_at_c{cycle_target}'] = curr_dcr_3s_soc
                 stats[f'dcr_1s_{dcr_soc_target_int}_soc_at_c{cycle_target}'] = curr_dcr_1s_soc
 
+            # Loop through the different SOCs for DCRs on charge
+            for dcr_soc_target in dcr_soc_targets_chg:
+
+                dcr_soc_target_int = int(dcr_soc_target*100)
+                curr_dcr_10s_soc = np.interp(cycle_target, hppc_stats_chg['cycle_index'],
+                                         hppc_stats_chg[f'dcr_10s_soc_{dcr_soc_target_int}'])
+                curr_dcr_3s_soc = np.interp(cycle_target, hppc_stats_chg['cycle_index'],
+                                         hppc_stats_chg[f'dcr_3s_soc_{dcr_soc_target_int}'])
+                curr_dcr_1s_soc = np.interp(cycle_target, hppc_stats_chg['cycle_index'],
+                                         hppc_stats_chg[f'dcr_1s_soc_{dcr_soc_target_int}'])
+
+                stats[f'dcr_10s_{dcr_soc_target_int}_soc_at_c{cycle_target}_chg'] = curr_dcr_10s_soc
+                stats[f'dcr_3s_{dcr_soc_target_int}_soc_at_c{cycle_target}_chg'] = curr_dcr_3s_soc
+                stats[f'dcr_1s_{dcr_soc_target_int}_soc_at_c{cycle_target}_chg'] = curr_dcr_1s_soc
+
+
         cycles_to_70_pct = stats['cycles_to_70_pct']
 
         # DCR interpolated at the cycle number corresponding to 70% capacity retention
+        # On discharge pulses
         for dcr_soc_target in dcr_soc_targets:
 
             dcr_soc_target_int = int(dcr_soc_target*100)
@@ -1012,20 +1046,48 @@ class FormationCell:
             stats[f'dcr_3s_{dcr_soc_target_int}_soc_at_70_pct'] = curr_dcr_3s_soc
             stats[f'dcr_1s_{dcr_soc_target_int}_soc_at_70_pct'] = curr_dcr_1s_soc
 
+        # DCR interpolated at the cycle number corresponding to 70% capacity retention
+        # On charge pulses
+        for dcr_soc_target in dcr_soc_targets_chg:
+
+            dcr_soc_target_int = int(dcr_soc_target*100)
+
+            curr_dcr_10s_soc = np.interp(cycles_to_70_pct, hppc_stats_chg['cycle_index'],
+                                    hppc_stats_chg[f'dcr_10s_soc_{dcr_soc_target_int}'])
+            curr_dcr_3s_soc = np.interp(cycles_to_70_pct, hppc_stats_chg['cycle_index'],
+                                    hppc_stats_chg[f'dcr_3s_soc_{dcr_soc_target_int}'])
+            curr_dcr_1s_soc = np.interp(cycles_to_70_pct, hppc_stats_chg['cycle_index'],
+                                    hppc_stats_chg[f'dcr_1s_soc_{dcr_soc_target_int}'])
+
+            stats[f'dcr_10s_{dcr_soc_target_int}_soc_at_70_pct_chg'] = curr_dcr_10s_soc
+            stats[f'dcr_3s_{dcr_soc_target_int}_soc_at_70_pct_chg'] = curr_dcr_3s_soc
+            stats[f'dcr_1s_{dcr_soc_target_int}_soc_at_70_pct_chg'] = curr_dcr_1s_soc
+
+
         return stats
 
 
-    def summarize_hppc_pulse_statistics(self):
+    def summarize_hppc_pulse_statistics(self, direction='discharge'):
         """
         Returns a summary table of only the most relevant HPPC metrics,
         including DCR at 0%, 50% and 100% SOC
 
         Returns a tuple of (DataFrame, list of SOC targets)
+
+        Parameters
+        ---------
+        direction (default='discharge'): either 'charge' or 'discharge' pulses
         """
 
-        results_list = self.process_diagnostic_hppc_data()
+        if direction == 'discharge':
+            results_list = self.process_diagnostic_hppc_discharge_data()
+        elif direction == 'charge':
+            results_list = self.process_diagnostic_hppc_charge_data()
+        else:
+            assert 'Direction must be either "charge" or "discharge"'
 
         stats = []
+
         for result in results_list:
 
             data = result['data']
@@ -1108,11 +1170,119 @@ class FormationCell:
         return results_list
 
 
-    def process_diagnostic_hppc_data(self):
+    def process_diagnostic_hppc_charge_data(self):
         """
         Takes in raw data and returns a data structure holding processed
-        HPPC pulse information; uses step indices to infer start and end of each
-        pulse.
+        HPPC discharge pulse information; uses step indices to infer start
+        and end of each pulse.
+
+        Outputs:
+        ---------
+        A list of dictionaries. Each dictionary holds:
+          - key: cycle index containing the HPPC cycle
+          - value: a Pandas DataFrame
+        """
+
+        df = self.get_aging_data_timeseries()
+
+        df_hppc = df[df['Step Index'] == STEP_INDEX_HPPC_CHARGE]
+        hppc_cycle_indices = np.unique(df_hppc['Cycle Number'])
+
+        results_list = list()
+
+        # Loop through each diagnostic test
+        for curr_cyc in hppc_cycle_indices:
+
+            curr_df = df[df['Cycle Number'] == curr_cyc]
+
+            # Initialize a bunch of variables for exporting raw outputs
+            voltage_vec_all = []
+            capacity_0_vec_all = []
+            voltage_0_vec_all = []
+            current_vec_all = []
+            time_vec_all = []
+            df_raw_list = []
+
+            # Process each pulse
+            pulse_list = []
+            for idx, point in enumerate(curr_df['Step Index'].values):
+
+                if idx == 0:
+                    continue
+
+                # Detect pulse start
+                if point == STEP_INDEX_HPPC_CHARGE \
+                    and curr_df['Step Index'].iloc[idx-1] != STEP_INDEX_HPPC_CHARGE:
+
+                    capacity_0 = curr_df['Charge Capacity (Ah)'].iloc[idx-1]
+                    voltage_0 = curr_df['Potential (V)'].iloc[idx-1]
+
+                    # Detect index corresponding to end of pulse
+                    jdx = idx + 1
+                    while True:
+                        jdx += 1
+                        if curr_df['Step Index'].iloc[jdx] != STEP_INDEX_HPPC_CHARGE:
+                            break
+
+                    # Extract, voltage-current-time vector for this pulse
+                    voltage_vec = curr_df['Potential (V)'].iloc[idx:jdx]
+                    current_vec = curr_df['Current (A)'].iloc[idx:jdx]
+                    time_vec = curr_df['Test Time (s)'].iloc[idx:jdx] - \
+                               curr_df['Test Time (s)'].iloc[idx]
+
+                    voltage_0_vec = voltage_0 * np.ones(np.size(voltage_vec))
+                    capacity_0_vec = capacity_0 * np.ones(np.size(voltage_vec))
+
+                    curr_dict = dict()
+                    curr_dict['voltage_v'] = voltage_vec
+                    curr_dict['current_a'] = current_vec
+                    curr_dict['time_s'] = time_vec
+                    curr_dict['voltage_0_v'] = voltage_0_vec
+                    curr_dict['capacity_0_ah'] = capacity_0_vec
+                    curr_df_raw = pd.DataFrame(curr_dict)
+                    df_raw_list.append(curr_df_raw)
+
+                    # Pulses that did not last 10 seconds could indicate a fault
+                    # in the test. We want to code to pass at this point
+                    is_pulse_completed = np.abs(time_vec.iloc[-1] - 10) < 0.1
+
+                    if not is_pulse_completed:
+                        continue
+
+                    voltage_at_1_sec  = np.interp(1, time_vec, voltage_vec)
+                    voltage_at_3_sec  = np.interp(3, time_vec, voltage_vec)
+                    voltage_at_10_sec = np.interp(10, time_vec, voltage_vec, right=voltage_vec.iloc[-1])
+
+                    # Use the mean current throughout the pulse to reduce noise
+                    current_mean = np.abs(np.mean(current_vec))
+
+                    result = dict()
+                    result['capacity'] = capacity_0
+                    result['voltage'] = voltage_0
+                    result['resistance_1s_ohm']  = (voltage_at_1_sec - voltage_0) / current_mean
+                    result['resistance_3s_ohm']  = (voltage_at_3_sec - voltage_0) / current_mean
+                    result['resistance_10s_ohm'] = (voltage_at_10_sec - voltage_0) / current_mean
+                    result['current'] = current_mean
+
+                    pulse_list.append(result)
+
+
+            df_raw_all = pd.concat(df_raw_list)
+
+            curr_result = dict()
+            curr_result['cycle_index'] = curr_cyc
+            curr_result['data'] = pd.DataFrame(pulse_list)
+            curr_result['raw_pulses'] = df_raw_all
+            curr_result['raw_all'] = curr_df
+            results_list.append(curr_result)
+
+        return results_list
+
+    def process_diagnostic_hppc_discharge_data(self):
+        """
+        Takes in raw data and returns a data structure holding processed
+        HPPC discharge pulse information; uses step indices to infer start
+        and end of each pulse.
 
         Outputs:
         ---------

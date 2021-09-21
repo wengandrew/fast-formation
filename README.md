@@ -17,7 +17,7 @@ Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
 - `data/...microformation.../`: data from formation cycles, exported from Voltaiq
 - `data/...aging.../`: data from aging tests, exported from Voltaiq
 - `data/...diagnostic/`: post-processed from aging test data
-- `documents/`: reference documentsc
+- `documents/`: reference documents
 - `output/`: processed data output (e.g. eSOH fit results, features extracted)
 
 
@@ -38,12 +38,21 @@ Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
 - sklearn
 - jupyter
 
+#### MATLAB
+
+MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
+algorithm used to generate the equilibrium potential toy model. 
+
+#### RStudio
+
+RStudio is used to run the test for the differences in the coefficients of 
+variation.
 
 
 ### Getting Started
 
 
-#### Test your environment
+#### Python: Test your environment
 
 Start in the root directory. Run `pytest` to make sure the tests are passing.
 
