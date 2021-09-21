@@ -1,22 +1,16 @@
-import os, sys
 import numpy as np
 import pandas as pd
-import ipdb
+import yaml
 
-if os.path.basename(os.getcwd()) == 'code-base':
-    os.chdir('../')
-sys.path.append('code-base')
+from formation import FormationCell
 
-assert os.path.basename(os.getcwd()) == 'project-formation'
+paths = yaml.load(open('paths.yaml', 'r'), Loader=None)
 
-from src.formation import FormationCell
-
-PATH_OUTPUT = 'output'
-PATH_ESOH = 'output/summary_esoh_table.csv'
-PATH_CORR = 'output/correlation_data.csv'
+PATH_OUTPUT = paths['outputs']
+PATH_ESOH = paths['outputs'] + 'summary_esoh_table.csv'
+PATH_CORR = paths['outputs'] + 'correlation_data.csv'
 IDX_ESOH_FRESH_CYCLE = 3
 IDX_ESOH_AGED_CYCLE = 56
-
 
 def export_hppc_data(cellid):
     """

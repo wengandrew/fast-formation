@@ -1,12 +1,13 @@
 
-from src.utils import *
+from re import I
+from utils import *
+from formation import FormationCell
 
 export_correlation_table()
 
 
 import ipdb; ipdb.set_trace()
 
-from src.formation import FormationCell
 
 F = FormationCell(1)
 

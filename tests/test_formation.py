@@ -1,6 +1,4 @@
 import pytest
-import ipdb
-import pandas as pd
 from src.formation import FormationCell as FormationCell
 
 @pytest.fixture

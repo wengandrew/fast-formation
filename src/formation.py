@@ -1,27 +1,21 @@
 import glob
 import numpy as np
-import json
+import json, yaml
 import pandas as pd
 import natsort
-import os, sys
 from matplotlib import pyplot as plt
 from scipy import interpolate, stats
 from scipy.signal import find_peaks, savgol_filter
 
-if os.path.basename(os.getcwd()) == 'code-base':
-    os.chdir('../')
-sys.path.append('code-base')
-
-assert os.path.basename(os.getcwd()) == 'project-formation'
-
-
 # Configure paths
-PATH_CYCLE      = 'data/2020-10-aging-test-cycles'
-PATH_TIMESERIES = 'data/2020-10-aging-test-timeseries'
-PATH_FORMATION  = 'data/2020-06-microformation-timeseries'
-PATH_METADATA   = 'documents/cell_tracker.xlsx'
-PATH_ESOH_SUMMARY = 'output/summary_esoh_table.csv'
-PATH_ESOH_DATA = 'output/2021-04-12-formation-esoh-fits'
+paths = yaml.load(open('paths.yaml', 'r'), Loader=None)
+
+PATH_CYCLE      = paths['data'] + '2020-10-aging-test-cycles'
+PATH_TIMESERIES = paths['data'] + '2020-10-aging-test-timeseries'
+PATH_FORMATION  = paths['data'] + '2020-06-microformation-timeseries'
+PATH_METADATA   = paths['documents'] + 'cell_tracker.xlsx'
+PATH_ESOH_SUMMARY = paths['outputs'] + 'summary_esoh_table.csv'
+PATH_ESOH_DATA = paths['outputs'] + '2021-04-12-formation-esoh-fits'
 
 # Configure step indices during cycling RPTs
 STEP_INDEX_C3_CHARGE = 7
@@ -217,13 +211,14 @@ class FormationCell:
 
         file = glob.glob(f'{PATH_FORMATION}/{regex}')
 
-        assert len(file) == 1, f'More than one file associated with ' \
-                               f'cell {self.cellid}'
+        assert len(file) == 1, f'File is missing or more than one file ' \
+                               f'is associated with cell {self.cellid}. ' \
+                               f'Check "{PATH_FORMATION}/{regex}"'
 
         df = pd.read_csv(file[0])
 
         # Make cycle number start from 1, not 0, to follow standard convention
-        df['Cycle Number'] +=1
+        df['Cycle Number'] += 1
 
         self._df_formation = df
 
