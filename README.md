@@ -8,7 +8,7 @@ Code and analysis results for the fast formation study.
 
 Dataset consists of 40 pouch cells built, formed, and cycled at UM Battery Lab.
 
-Data exported from [Voltaiq](https://umichbatterylab.voltaiq.co).
+Data exported from [Voltaiq](https://voltaiq.co).
 
 
 ### Requirements
