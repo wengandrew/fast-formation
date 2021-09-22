@@ -29,15 +29,6 @@ Data exported from [Voltaiq](https://umichbatterylab.voltaiq.co).
 - seaborn
 - sklearn
 
-#### MATLAB
-
-MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
-algorithm used to generate outputs for the electrode stoichiometry model. The source code is available under the `/matlab/` directory.
-
-#### RStudio
-
-RStudio is used to run the test for the differences in the coefficients of
-variation.
 
 
 ### Getting Started
@@ -85,3 +76,13 @@ Start a Jupyter Lab session using:
 ```
 jupyter lab
 ```
+
+#### MATLAB
+
+MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
+algorithm used to generate outputs for the electrode stoichiometry model. The source code is available under the `/matlab/` directory.
+
+#### RStudio
+
+RStudio is used to run the test for the differences in the coefficients of
+variation.

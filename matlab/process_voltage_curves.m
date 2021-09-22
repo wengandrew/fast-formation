@@ -7,8 +7,8 @@ function process_voltage_curves()
     set_default_plot_settings_manuscript();
 
     % Set paths
-    input_path = 'data/2020-10-diagnostic-test-c20';
-    output_path = 'output/2021-04-12-formation-esoh-fits';
+    input_path = '../data/2020-10-diagnostic-test-c20';
+    output_path = '../output/2021-04-12-formation-esoh-fits';
 
     cellid_array = 1:1:40;
 
