@@ -29,8 +29,6 @@ Data exported from [Voltaiq](https://umichbatterylab.voltaiq.co).
 - seaborn
 - sklearn
 
-
-
 ### Getting Started
 
 #### Set up I/O folders
@@ -89,6 +87,11 @@ source code is available under the `/matlab/` directory.
 The main function to run is `process_voltage_curves.m`. This function will read
 in the relevant input files from the formation tests and return diagnostic
 signals.
+
+The paths for the MATLAB executables assume the current folder is the base
+directory of the repository and that the `data` and `output` folders are one level
+above this directory. Before running the code, add the `/matlab/` directory
+into the path using `addpath matlab`. Do not run the code from the `/matlab/` folder.
 
 #### RStudio
 
