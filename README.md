@@ -46,14 +46,15 @@ Start in the root directory. Run `pytest` to make sure that tests are passing.
 pytest
 ```
 
-This will make sure that your paths are all configured correctly and that your Python environment is set up correctly.
+This will make sure that your paths are all configured correctly and that your
+Python environment is set up correctly.
 
 #### Regenerating core datasets (if needed)
 
 A few key operations for re-generating core datasets:
 
-- `process_voltage_curves.m` will return a `.csv` file containing
-   eSOH metrics on each cell (`summary_esoh_table.csv`)
+- `process_voltage_curves.m` will return a `.csv` file containing eSOH metrics
+   on each cell (`summary_esoh_table.csv`)
 
 For correlation studies, first build the correlation table:
 
@@ -65,9 +66,11 @@ python
 ```
 
 `build_correlation_table()` will take in a `summary_esoh_table.csv` and return
-an augmented table containing all of the information to complete the correlation study.
+an augmented table containing all of the information to complete the correlation
+study.
 
-The output file will be dumped in the specified output directory, e.g `output/correlations.csv`.
+The output file will be dumped in the specified output directory, e.g
+`output/correlations.csv`.
 
 #### Running notebooks
 
@@ -80,7 +83,12 @@ jupyter lab
 #### MATLAB
 
 MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
-algorithm used to generate outputs for the electrode stoichiometry model. The source code is available under the `/matlab/` directory.
+algorithm used to generate outputs for the electrode stoichiometry model. The
+source code is available under the `/matlab/` directory.
+
+The main function to run is `process_voltage_curves.m`. This function will read
+in the relevant input files from the formation tests and return diagnostic
+signals.
 
 #### RStudio
 
