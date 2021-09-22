@@ -1,7 +1,7 @@
 function test_find_peaks()
 
     set_default_plot_settings()
-    files = find_files('~/Google Drive File Stream/My Drive/formation/data/2020-10-diagnostic-test-c20', ...
+    files = find_files('../data/2020-10-diagnostic-test-c20', ...
         'diagnostic_test_.*_charge');
 
     cmap = parula(numel(files));

@@ -1,6 +1,6 @@
 function plot_summary_esoh_table()
 
-    tbl = readtable('output/2021-04-12-fast-formation-esoh-fits/summary_esoh_table.csv');
+    tbl = readtable('../output/2021-04-12-fast-formation-esoh-fits/summary_esoh_table.csv');
    
     % Get rid of high RMS data points
 %     RMSE_THRESHOLD_MV = 120;
