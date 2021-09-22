@@ -8,7 +8,7 @@ from scipy import interpolate, stats
 from scipy.signal import find_peaks, savgol_filter
 
 # Configure paths
-paths = yaml.load(open('paths.yaml', 'r'), Loader=None)
+paths = yaml.load(open('paths.yaml', 'r'), Loader=yaml.FullLoader)
 
 PATH_CYCLE      = paths['data'] + '2020-10-aging-test-cycles'
 PATH_TIMESERIES = paths['data'] + '2020-10-aging-test-timeseries'

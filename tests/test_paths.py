@@ -10,7 +10,7 @@ from pathlib import Path
 @pytest.fixture
 def paths():
 
-    paths = yaml.load(open('paths.yaml', 'r'), Loader=None)
+    paths = yaml.load(open('paths.yaml', 'r'), Loader=yaml.FullLoader)
 
     return paths
 

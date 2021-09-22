@@ -4,7 +4,7 @@ import yaml
 
 from formation import FormationCell
 
-paths = yaml.load(open('paths.yaml', 'r'), Loader=None)
+paths = yaml.load(open('paths.yaml', 'r'), Loader=yaml.FullLoader)
 
 PATH_OUTPUT = paths['outputs']
 PATH_ESOH = paths['outputs'] + 'summary_esoh_table.csv'

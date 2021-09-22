@@ -1,4 +1,10 @@
 
+"""
+Example runbook.
+
+Start here for a demo of basic features of the library
+"""
+
 from re import I
 from utils import *
 from formation import FormationCell
