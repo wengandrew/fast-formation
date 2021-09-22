@@ -1,6 +1,6 @@
 # Fast Formation Project
 
-7/5/2021
+Last Updated 9/21/2021
 
 Andrew Weng
 
@@ -8,17 +8,7 @@ Code and analysis results for the fast formation study.
 
 Dataset consists of 40 pouch cells built, formed, and cycled at UM Battery Lab.
 
-Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
-
-
-### Folder Descriptions
-
-- `code/`: source code written in both Python and MATLAB
-- `data/...microformation.../`: data from formation cycles, exported from Voltaiq
-- `data/...aging.../`: data from aging tests, exported from Voltaiq
-- `data/...diagnostic/`: post-processed from aging test data
-- `documents/`: reference documents
-- `output/`: processed data output (e.g. eSOH fit results, features extracted)
+Data exported from [Voltaiq](https://umichbatterylab.voltaiq.co).
 
 
 ### Requirements
@@ -30,73 +20,68 @@ Data exported from [Voltaiq](umichbatterylab.voltaiq.co).
 - scipy
 - matplotlib
 - ipdb
+- jupyter
 - numpy
 - pandas
 - pytest
+- pyyaml
 - natsort
 - seaborn
 - sklearn
-- jupyter
 
 #### MATLAB
 
 MATLAB R2020a was used to run the electrode-specific state of health (eSOH)
-algorithm used to generate the equilibrium potential toy model. 
+algorithm used to generate outputs for the electrode stoichiometry model. The source code is available under the `/matlab/` directory.
 
 #### RStudio
 
-RStudio is used to run the test for the differences in the coefficients of 
+RStudio is used to run the test for the differences in the coefficients of
 variation.
 
 
 ### Getting Started
 
+#### Set up I/O folders
+
+Modify `paths.yaml` to point to your local data directories.
+
 
 #### Python: Test your environment
 
-Start in the root directory. Run `pytest` to make sure the tests are passing.
+Start in the root directory. Run `pytest` to make sure that tests are passing.
 
 ```
 pytest
 ```
 
-This will make sure that you have all of the Python dependencies and data files 
-necessary to use the data processing tools in this library.
-
+This will make sure that your paths are all configured correctly and that your Python environment is set up correctly.
 
 #### Regenerating core datasets (if needed)
 
 A few key operations for re-generating core datasets:
 
-- `process_voltage_curves.m` is responsible to returning an output file containing
+- `process_voltage_curves.m` will return a `.csv` file containing
    eSOH metrics on each cell (`summary_esoh_table.csv`)
 
-For correlation studies, you need to build a complete table of parameters. This is
-done using a Python utility. To run Python source code, always start in the 
-`code-base` directory:
+For correlation studies, first build the correlation table:
 
 ```
-cd code-base
-python3
+python
 
->>> from src.utils import build_correlation_table
+>>> from utils import build_correlation_table
 >>> build_correlation_table()
 ```
 
 `build_correlation_table()` will take in a `summary_esoh_table.csv` and return
 an augmented table containing all of the information to complete the correlation study.
 
-Check to make sure there exists a file called `output/correlations.csv`.
+The output file will be dumped in the specified output directory, e.g `output/correlations.csv`.
 
 #### Running notebooks
 
-To run the analysis notebooks, make sure you have `jupyter` installed.
-
-Open up Jupyter from the Terminal like so:
+Start a Jupyter Lab session using:
 
 ```
-python3 -m jupyter notebook
+jupyter lab
 ```
-
-A new tab will open on your web browser containing the notebook. Proceed to open up
-each notebook for exploration.
