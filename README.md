@@ -38,7 +38,13 @@ Modify `paths.yaml` to point to your local data directories.
 
 #### Python: Test your environment
 
-Start in the root directory. Run `pytest` to make sure that tests are passing.
+Start in the root directory.
+
+```
+cd code
+```
+
+Run `pytest` to make sure that tests are passing.
 
 ```
 pytest
@@ -59,7 +65,7 @@ For correlation studies, first build the correlation table:
 ```
 python
 
->>> from utils import build_correlation_table
+>>> from src.utils import build_correlation_table
 >>> build_correlation_table()
 ```
 
