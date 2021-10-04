@@ -66,7 +66,7 @@ res.v_pos = V_pos;
 res.q_full = q_full;
 res.v_full = U_full;
 
-fid = fopen(sprintf('output/voltage_curves_before_formation.json'), 'w');
+fid = fopen(sprintf('../output/voltage_curves_before_formation.json'), 'w');
 encoded_json = jsonencode(res);
 fprintf(fid, encoded_json);  
 fclose(fid);

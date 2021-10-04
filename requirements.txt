@@ -1,0 +1,12 @@
+openpyxl
+scipy
+matplotlib
+ipdb
+jupyter
+numpy
+pandas
+pytest
+pyyaml
+natsort
+seaborn
+sklearn

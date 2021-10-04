@@ -2,8 +2,6 @@ function process_voltage_curves()
     % Takes in voltage data and run it through the eSOH model to get POS,
     % NEG, and LLI losses
 
-    TO_RECALIBRATE = false; % Run the curve recalibration procedure?
-
     set_default_plot_settings_manuscript();
 
     % Set paths
@@ -68,12 +66,6 @@ function process_voltage_curves()
             res = run_esoh(raw_data, Un, Up);
 
             write_to_json(res, output_path, output_filename)
-            
-            % Do the recalibration
-            if TO_RECALIBRATE
-                 [Un, Up] = recalibrate(raw_data.voltage, raw_data.charge_capacity, ...
-                     res.Xt, Un, Up);
-            end
 
             fh = figure();
 
@@ -164,7 +156,7 @@ function process_voltage_curves()
             'LLI', 'LAM_PE', 'LAM_NE', 'C20_loss', ...
             'Cn_pf', 'x100_pf'});
 
-    writetable(results_table, 'output/summary_esoh_table.csv');
+    writetable(results_table, '../output/summary_esoh_table.csv');
 
     plot_summary_esoh_table();
 

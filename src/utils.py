@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from formation import FormationCell
+from src.formation import FormationCell
 
 paths = yaml.load(open('paths.yaml', 'r'), Loader=yaml.FullLoader)
 
