@@ -1,6 +1,6 @@
 # Fast Formation Project
 
-Last Updated 9/21/2021
+Last Updated 10/4/2021.
 
 Andrew Weng
 
@@ -11,47 +11,41 @@ Dataset consists of 40 pouch cells built, formed, and cycled at UM Battery Lab.
 Data exported from [Voltaiq](https://voltaiq.co).
 
 
-### Requirements
+## Getting Started
 
-#### Python
+First, set up a virtual environment (e.g. using `pyenv`) for this project.
 
-- python3
-- openpyxl
-- scipy
-- matplotlib
-- ipdb
-- jupyter
-- numpy
-- pandas
-- pytest
-- pyyaml
-- natsort
-- seaborn
-- sklearn
+The code runs on Python 3.8.8.
 
-### Getting Started
+Inside your virtual environment, install the necessary packages using:
+
+```
+pip install -r requirements.txt
+```
 
 #### Set up I/O folders
 
-Modify `paths.yaml` to point to your local data directories.
+Modify `paths.yaml` to point to your local paths. For example:
 
+```
+
+ data: '/Users/aweng/code/fast-formation/data/'
+ outputs: '/Users/aweng/code/fast-formation/output/'
+ documents: '/Users/aweng/code/fast-formation/documents/'
+
+```
 
 #### Python: Test your environment
 
-Start in the root directory.
-
-```
-cd code
-```
+Start in the root directory of the repository.
 
 Run `pytest` to make sure that tests are passing.
 
 ```
-pytest
+python -m pytest
 ```
 
-This will make sure that your paths are all configured correctly and that your
-Python environment is set up correctly.
+This will make sure that your paths and environment are set up correctly.
 
 #### Regenerating core datasets (if needed)
 
