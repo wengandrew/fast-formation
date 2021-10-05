@@ -23,6 +23,12 @@ Inside your virtual environment, install the necessary packages using:
 pip install -r requirements.txt
 ```
 
+
+#### Download the raw data files
+
+The raw battery data is not stored in this repo. Download a copy of the data [here](https://doi.org/10.7302/pa3f-4w30).
+
+
 #### Set up I/O folders
 
 Modify `paths.yaml` to point to your local paths. For example:
