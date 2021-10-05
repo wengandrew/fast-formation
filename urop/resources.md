@@ -1,15 +1,14 @@
 # Resources
 
 
-## Battery Research
+## Research
 
 
+## Batteries
 
-## How Batteries Work
-
-- Battery Basics: https://www.youtube.com/watch?v=DBLHaLhyo2w (25 mins)
+- 10/4/21 - Battery Basics: https://www.youtube.com/watch?v=DBLHaLhyo2w (25 mins)
 
 
-## Data Analysis and Programming
+## Programming
 
 
