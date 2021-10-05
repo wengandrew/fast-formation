@@ -25,10 +25,10 @@
 #### Tools
 
 - [ ] Get access to the Dropbox raw data path 
-- [ ] Set up the source code 
 - [ ] Set up your GitHub account 
 - [ ] Clone this repository: https://github.com/wengandrew/fast-formation 
 - [ ] Set up your paths and local environment and get the code running 
+- [ ] You will need to download the raw data files from here: https://doi.org/10.7302/pa3f-4w30
 - [ ] Do all of the tests pass? (`python -m pytest`)
 
 
