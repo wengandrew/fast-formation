@@ -1,5 +1,7 @@
 # Resources
 
+Useful resources will be added here as I find them.
+
 
 ## Research
 
