@@ -9,6 +9,7 @@
 - Discussed the list of TODO's for next week
   - Most important:
     - watch the YouTube lecture on batteries and attempt to answer the 'Battery Knowledge Check' questions
+    - read through the project list description and try to make sense of what would be the next steps
     - set up your GitHub account and try to get the code running locally on your machine
 
 #### Milestones
