@@ -58,7 +58,7 @@ with a lithium metal counter electrode is the potential of your working material
 versus lithium. In literature, you will typically see this potential reported as
 "V vs Li/Li+".
 
-Last month, I worked with the University of Michigan Battery Lab to build nine
+Last month, we worked with the University of Michigan Battery Lab to build nine
 coin cells. These cells consists of three sets of graphite anodes, nickel
 manganese cobalt (NMC) cathodes, and lithium iron phosphate (LFP) cathodes. The
 presence of the three duplicate cells is because there is generally high
@@ -70,7 +70,7 @@ environment in a full cell where there is no lithium metal reservoir. Therefore,
 we are also interested in learning about how quickly the coin cells degrade
 (e.g. through repeated capacity checks).
 
-I have already been collecting various performance data on these cells. The
+We have already been collecting various performance data on these cells. The
 first step in this project would be to understand what data has already been
 collected and continue running experiments to make sure we will collect all of
 the data needed to answer the above questions. In parallel, parser scripts will
