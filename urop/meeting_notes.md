@@ -59,6 +59,9 @@
 
 - [ ] What is the role of the electrolyte in a battery?
 
+- [ ] If you discharge a 5 Ah battery at 0.5 Amps, what is the equivalent C-rate?
+  - [ ] Approximately how long will it take for this battery to fully discharge?
+ 
 - [ ] How is SOC defined for the full cell? 
   - [ ] What is the equivalent concept for "SOC" for a half cell?
 
