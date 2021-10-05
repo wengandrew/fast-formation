@@ -9,10 +9,6 @@ Sponsors and Affiliates:
 - Michigan Research and Discovery Scholars (MRADS)
 - Research, Innovation, Service and Entrepreneurship (RISE) Program
 
-Students
-- Roger Ho
-- Iaroslav Kovalchuk
-
 
 ## Goals
 
