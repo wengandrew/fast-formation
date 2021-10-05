@@ -1,11 +1,15 @@
 # Meeting Notes
 
-## 10/4/2021
+## 10/5/2021
 
+### Notes
 
-### Discussion
-
-
+- We met up in GGB and got introduced to each other
+- Reviewed the contents of the project homepage (GitHub repository)
+- Discussed the list of TODO's for next week
+  - Most important:
+    - watch the YouTube lecture on batteries and attempt to answer the 'Battery Knowledge Check' questions
+    - set up your GitHub account and try to get the code running locally on your machine
 
 #### Milestones
 
@@ -35,7 +39,6 @@
 
 #### Research
 
-
 - [ ] Set up a Mendeley account 
 - [ ] Get access to the shared Mendeley Group (ask Andrew)
 
@@ -51,14 +54,12 @@
 - [ ] When a battery is charged, does lithium go from the cathode or the anode?
 
 - [ ] What is the role of the separator in a battery? 
-  - [ ] What is the separator
-   typically made of?
+  - [ ] What is the separator typically made of?
 
 - [ ] What is the role of the electrolyte in a battery?
 
 - [ ] How is SOC defined for the full cell? 
-  - [ ] What is the equivalent concept for
-   "SOC" for a half cell?
+  - [ ] What is the equivalent concept for "SOC" for a half cell?
 
 - [ ] How is the cell capacity measured? What are some factors that determine this
 value?
@@ -76,7 +77,6 @@ them are SOC-dependent?
 
 
 ## Future Meetings
-
 
 ### TODO's
 
