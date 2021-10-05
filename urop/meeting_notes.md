@@ -19,21 +19,22 @@
 
 #### Tools
 
-[ ] Get access to the Dropbox raw data path [ ] Set up the source code [ ] Set
-up your GitHub account [ ] Clone this repository:
-https://github.com/wengandrew/fast-formation [ ] Set up your paths and local
-environment and get the code running [ ] Do all of the tests pass? (`python -m
-pytest`)
+- [ ] Get access to the Dropbox raw data path 
+- [ ] Set up the source code 
+- [ ] Set up your GitHub account 
+- [ ] Clone this repository: https://github.com/wengandrew/fast-formation 
+- [ ] Set up your paths and local environment and get the code running 
+- [ ] Do all of the tests pass? (`python -m pytest`)
 
 #### Social
 
-[ ] Join our Slack workspace and introduce yourself in #general [ ] Get your
-profile added to our website
+- [ ] Join our Slack workspace and introduce yourself in #general 
+- [ ] Get your profile picture added to our website
 
 #### Research
 
-[ ] Set up a Mendeley account [ ] Get access to the shared Mendeley Group (ask
-Andrew)
+[ ] Set up a Mendeley account 
+[ ] Get access to the shared Mendeley Group (ask Andrew)
 
 #### Battery Knowledge Check
 
