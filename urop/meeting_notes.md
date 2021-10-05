@@ -54,14 +54,21 @@
 
 - [ ] When a battery is charged, does lithium go from the cathode or the anode?
 
+- [ ] If you discharge a 5 Ah battery at 0.5 Amps, what is the equivalent C-rate?
+  - [ ] Approximately how long will it take for this battery to fully discharge?
+ 
+- [ ] What is there relation between a battery's energy, capacity, and voltage?
+
+- [ ] What is the typical unit used to express a battery's capacity and energy?
+
+
+(More advanced)
+
 - [ ] What is the role of the separator in a battery? 
   - [ ] What is the separator typically made of?
 
 - [ ] What is the role of the electrolyte in a battery?
 
-- [ ] If you discharge a 5 Ah battery at 0.5 Amps, what is the equivalent C-rate?
-  - [ ] Approximately how long will it take for this battery to fully discharge?
- 
 - [ ] How is SOC defined for the full cell? 
   - [ ] What is the equivalent concept for "SOC" for a half cell?
 
