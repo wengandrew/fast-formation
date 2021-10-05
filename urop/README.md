@@ -51,8 +51,8 @@ Sponsors and Affiliates:
 
 - Keep in touch via Slack
 
-- How will this semester go:
-  - For first two weeks: get oriented with tools and project scope
+- How this semester will go:
+  - For the first two weeks: get oriented with tools and project scope
   - Remaining time: commit to a specific project, goals, and finish it
   - Drop by Autolab 2032 during work hours if you want a dedicated space to focus
     - Doors are unlocked as long as at least one of us is there
