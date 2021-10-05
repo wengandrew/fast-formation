@@ -82,9 +82,9 @@ battery performance.
 
 ## Non-Monotonic Current Decay During CV Hold: Measuring the Micro using the Macro
 
-This is an advanced project.
+(This is an advanced project.)
 
-The goal is to develop a physical understanding of a candidate early-life
+The goal of this project is to develop a physical understanding of a candidate early-life
 diagnostic signal that could indicate the presence of lithium plating inside
 batteries. Lithium plating can lead to battery fires so the detection thereof is
 a very hot topic (no pun intended). Methods to detect lithium plating exist, but
@@ -104,29 +104,28 @@ instance of this signal for one of our cells.
 
 ## How Lithiated Are Cathode and Anode Particles During Active Material Loss?
 
-This is an advanced project.
+(This is an advanced project.)
 
 Electrode stoichiometry models must be precise since this model sets the
 thermodynamic basis for all subsequent battery dynamics modeling. It is
 impossible to achieve an accurate battery dynamics model without first making
 sure the stoichiometry model is accurate.
 
-There is an un-resolve question in electrode stoichiometry models for aged
+There is an unresolved question in electrode stoichiometry models for aged
 battery systems: when cathode and anode active material is lost, how much of the
 particle is filled with lithium? The answer to this question is crucial since it
 affects the accounting of lithium inventory loss in the stoichiometry model.
 Different assumptions (i.e. if the particles are fully lithiated versus fully
-delithiated) lead to very different stoichiometry alignments. The resulting
+delithiated) lead to different stoichiometry alignments. The resulting
 dynamical battery state predictions depend on these alignments.
 
-The first step of this project is to demonstrate that this impact is indeed
-large. (I am convinced it is, but we should do it in a rigorous way through a
-physics-based model). We will need to develop some mathematical relationships
-between active material loss types (e.g. while lithiated versus delithiated) and
-the translations and shifting of the electrode equilibrium potential curves. The
-Python Mathematical Modeling (PyMAMM) framework can be used to conduct the
-numerical simulations of battery dynamics.
+The first step of this project is to demonstrate that the impact of electrode lithiation
+during active material loss does has a large impact on the electrode stoichiometries.
+We will need to develop some mathematical relationships between active material loss types 
+(e.g. while lithiated versus delithiated) and the translations and shifting of the 
+electrode equilibrium potential curves. The Python Mathematical Modeling (PyMAMM) framework 
+can be used to conduct the numerical simulations of battery dynamics.
 
-I would also like to find experimental evidence to confirm what is the state of
+We also seek experimental evidence to confirm possible states of
 lithiation during the active material loss event. We may need to partner up with
 some wet labs to design the right experiment for this work.
