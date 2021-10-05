@@ -81,4 +81,3 @@ them are SOC-dependent?
 ### TODO's
 
 - [ ] Lab tour
-- [ ]

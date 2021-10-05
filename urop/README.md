@@ -19,8 +19,7 @@ Sponsors and Affiliates:
 
 ### Research
 
-- Top-down approach: start from societal need and identify relevant problems
-- You pick what specific project you want to work on
+- You pick what project you want to work on
 - Theme: methods for battery lifetime modeling, estimation, and prediction
 - Theme: data-driven analysis and modeling of battery behavior
 - End goal: technical reports, presentations, and journal publications
