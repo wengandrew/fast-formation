@@ -1,6 +1,95 @@
 # Meeting Notes
 
-## 10/5/2021
+## 10/6/2021
+
+Topics:
+1. Assign projects
+2. Review battery key performance metrics
+3. Assign tasks for the coming weeks
+
+
+## Battery Performance Metrics
+
+Let's divide battery metrics into three broad categories: (1) performance, (2) lifetime, (3) safety.
+
+
+### Performance
+
+| User (e.g. phone) | User (e.g. car) | Battery |
+| ----------------- | --------------- | ------- |
+| 'charge'          | range (miles)   | capacity / energy |
+| recharge speed    | recharge speed  | resistance / it's complicated |
+| -                 | max acceleration | resistance / it's complicated | 
+
+#### Capacity
+
+- The open circuit voltage (OCV) curve
+- Voltage limits
+- Capacity vs gravimetric capacity vs volumetric capacity
+- Going from capacity to energy using integral method vs average voltage
+
+
+#### Resistance
+
+- Consider the most basic battery model: OCV-R
+- Ohm's law
+- Impact of current (C-rate) on measured capacity
+
+
+
+### Lifetime
+
+| User (e.g. phone) | User (e.g. car) | Battery | 
+| ----------------- | --------------- | ------- |
+| 'Battery life'    | 'Battery life ' | cycle number to x% of initial capacity / it's complicated |
+
+
+#### Cycle Life
+
+- Charge/discharge cycling
+- Capacity (or energy) over cycles
+- Capacity fade mechanisms
+- Resistance growth
+
+
+### Safety
+
+| User (e.g. phone) | User (e.g. car) | Battery |
+| ----------------- | --------------- | ------- |
+| Will not catch on fire | will not catch on fire | it's complicated |
+
+#### Safety Characterization
+
+- Common battery failure modes
+- Methods for inducing battery failure and characterizing the thermal event
+
+### More Advanced Topics
+
+- Take everything we just discussed and now consider the battery as a system comprising multiple electrochemically active components: (1) cathode, (2) anode, (3) electrolyte
+
+
+### For Next Week
+
+- Read a paper
+  - Set up Mendeley
+  - Pick one of the papers from the shared folder (I will share a link to this), read through the abstract, introduction, methods, and conclusion. If brave, read through the results and discussion sections as well. Take notes.
+
+- Do your own literature review: use Google search to find a research article of your interest. Read through the abstract, introduction, methods, and conclusion. If brave, read through the results and discussion sections as well. Take notes.
+
+
+### Knowledge Checks
+
+- What conventional units for capacity and energy?
+- What is the relationship between capacity and energy?
+- How do you convert from vehicle range to energy?
+- Some common plots you will see in literature
+  - Ragone plot: comparing energy and power of different battery systems
+  - Cycle life plots: usually capacity versus cycle number
+
+## 10/4/2021
+
+
+### Discussion
 
 ### Notes
 
@@ -14,10 +103,12 @@
 
 #### Milestones
 
-- Get oriented
-- Pick a project
-- Make progress on project
-- Present your work
+Looking ahead, here's where we're going:
+
+1. Get oriented
+2. Pick a project
+3. Make progress on project
+4. Present your work
 
 
 ### TODO's
@@ -92,3 +183,4 @@ them are SOC-dependent?
 ### TODO's
 
 - [ ] Lab tour
+- [ ] Share Joule paper
