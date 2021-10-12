@@ -19,6 +19,8 @@ Useful resources will be added here as I find them.
     - http://mocha-java.uccs.edu/ECE5710/ECE5710-Notes02.pdf
   - Course notes (2): http://mocha-java.uccs.edu/ECE5720/
 
+- 10/6/2021 - What do we mean by 'battery performance characteristics'?
+   - https://www.mpoweruk.com/performance.htm
 
 ## Programming
 
