@@ -1,6 +1,14 @@
 # Meeting Notes
 
-## 10/6/2021
+## 10/19/2021
+
+Topics: TBD
+
+- More on cell aging characterization
+- More on cell aging mechanisms
+- Writing cell data parsers
+
+## 10/12/2021
 
 Topics:
 1. Assign projects
