@@ -7,6 +7,17 @@ Topics:
 2. Review battery key performance metrics
 3. Assign tasks for the coming weeks
 
+## Project Assignments
+
+Project 1: Fast Formation Cells at End-of-Life
+- Assigned to Roger
+
+
+Project 2: Coin Cell Characterization
+- Assigned to Iaroslav
+
+Project-specific next steps will be reviewed in person during office hours.
+
 
 ## Battery Performance Metrics
 
@@ -54,6 +65,8 @@ Let's divide battery metrics into three broad categories: (1) performance, (2) l
 
 ### Safety
 
+(Did not cover)
+
 | User (e.g. phone) | User (e.g. car) | Battery |
 | ----------------- | --------------- | ------- |
 | Will not catch on fire | will not catch on fire | it's complicated |
@@ -65,16 +78,15 @@ Let's divide battery metrics into three broad categories: (1) performance, (2) l
 
 ### More Advanced Topics
 
+(Did not cover)
+
 - Take everything we just discussed and now consider the battery as a system comprising multiple electrochemically active components: (1) cathode, (2) anode, (3) electrolyte
 
 
 ### For Next Week
 
-- Read a paper
-  - Set up Mendeley
-  - Pick one of the papers from the shared folder (I will share a link to this), read through the abstract, introduction, methods, and conclusion. If brave, read through the results and discussion sections as well. Take notes.
+- Get started on working with the datasets
 
-- Do your own literature review: use Google search to find a research article of your interest. Read through the abstract, introduction, methods, and conclusion. If brave, read through the results and discussion sections as well. Take notes.
 
 
 ### Knowledge Checks
@@ -85,6 +97,7 @@ Let's divide battery metrics into three broad categories: (1) performance, (2) l
 - Some common plots you will see in literature
   - Ragone plot: comparing energy and power of different battery systems
   - Cycle life plots: usually capacity versus cycle number
+
 
 ## 10/4/2021
 
