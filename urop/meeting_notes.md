@@ -1,14 +1,20 @@
 # Meeting Notes
 
-## 10/19/2021
+## 10/25/2021
 
-Topics: TBD
+We discussed a few topics together:
 
-- More on cell aging characterization
-- More on cell aging mechanisms
-- Writing cell data parsers
+1. "Static vs dynamic" view of knowledge; finding and understanding papers
+2. Review of battery components and the idea of lithium stoichiometry
+3. Breaking apart the full cell OCV curve into positive and negative curves
 
-## 10/12/2021
+Logistics:
+
+- No meeting next week
+- Start making progress with plotting the raw data
+- In future weeks, start sharing some results during the group meetings
+
+## 10/6/2021
 
 Topics:
 1. Assign projects
