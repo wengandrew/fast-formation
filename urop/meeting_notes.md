@@ -2,12 +2,12 @@
 
 ## 11/8/2021
 
-Today, we will discuss work assignment for the rest of the semester ending on Dec 10th.
+Today, we will discuss work assignment for the rest of the semester.
 
-By the end of the semester, you will produce two products:
+By the end of the semester, you will deliver two products:
 
-1. A report in the style of a Journal paper
-2. The accompanying code that you wrote
+1. A report in the style of a journal paper
+2. The accompanying code that you wrote (`.py` files, `.ipynb` files)
 
 You will submit the work in the form of a Pull Request on Github. Details of the submission will be covered in a future week.
 
@@ -23,7 +23,7 @@ The bulk of your work for the remaining weeks will be:
 
 #### Overview
 
-You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and what are the next steps. The length and level of detail of your report is up to you and depends on your time availability for the next 4 weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitBug by **December 10th**. For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
+You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and the next steps. The length and level of detail of your report is up to you and depends on your time availability over the next four weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitHub by **December 10th**. For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
 
 The following content is recommended as a bare minimum:
 
