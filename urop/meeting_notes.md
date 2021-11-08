@@ -23,7 +23,7 @@ The bulk of your work for the remaining weeks will be:
 
 #### Overview
 
-You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and the next steps. The length and level of detail of your report is up to you and depends on your time availability over the next four weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitHub by **December 10th**. 
+You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and the next steps. The length and level of detail of your report is up to you and depends on your time availability over the next four weeks. At a minimum, a Pull Request with a report and the accompanying code must be submitted via GitHub by **December 10th**. 
 
 For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
 
@@ -33,7 +33,7 @@ The following content is recommended as a bare minimum:
 2. At least 5 figures
 3. At least 5 references
 4. The report addresses at least two research questions relating to your data
-5. Uner *results*, you present the data clearly (in a figure or a table)
+5. Under *results*, you present the data clearly (in a figure or a table)
 6. Under *discussion*, you provide a reasonable interpretation of what the data means and discuss implications
 7. Under *discussion*, you provide at least two next steps which logically follow from the analysis
 
@@ -69,13 +69,13 @@ Recommendation:
   - Introduce the main knowledge gaps that you will address in this work. Why are they important questions to answer.
   
 - Experimental Methods
-  - **Do this after Results and Discussion are compmleted.**
+  - **Do this after Results and Discussion are completed.**
   - Write down what you know about what was done experimentally. Cite other papers where relevant. Since you entered the project mid-way through, you are not expected to know every little detail about how the cells were prepared. I can help fill in the details if you ask.
   
 - Results
   - **This should take up at least 50% of your time.**
   - The main plots you generate should go into this section.
-  - In the text, describe that you observe.
+  - In the text, describe what you observe.
   
 - Discussion 
   - **Do this after you complete a draft of the results section**. 
@@ -101,7 +101,7 @@ Reference: https://medium.com/creators-hub/how-to-use-writing-to-improve-your-th
 
 #### Formatting
 
-You will use Overleaf to write the report. Overleaf is an online LaTeX editor. LaTeX is a common typesetting system used for scientific documentation. LaTeX is useful when you have to write a lot of mathematical formulas. We will not spend time learning about how to write formulas in LaTeX (and for your reports, there will not be many, if any, equations for you to worry about). 
+You will use **Overleaf** to write the report. Overleaf is an online LaTeX editor. LaTeX is a common typesetting system used for scientific documentation. LaTeX is useful when you have to write a lot of mathematical formulas. We will not spend time learning about how to write formulas in LaTeX (and for your reports, there will not be many, if any, equations for you to worry about). 
 
 I will provide you a document template in the coming weeks. We may also review the basics to get started with writing the report.
 
@@ -146,7 +146,6 @@ Topics:
 
 Project 1: Fast Formation Cells at End-of-Life
 - Assigned to Roger
-
 
 Project 2: Coin Cell Characterization
 - Assigned to Iaroslav
