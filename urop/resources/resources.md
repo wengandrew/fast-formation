@@ -3,7 +3,9 @@
 Useful resources will be added here as I find them.
 
 
-## Research
+## Research & Writing
+
+- 11/8/2021 - 'Writing Good' (in resources folder)
 
 
 ## Batteries
@@ -22,6 +24,11 @@ Useful resources will be added here as I find them.
 - 10/6/2021 - What do we mean by 'battery performance characteristics'?
    - https://www.mpoweruk.com/performance.htm
 
-## Programming
+
+## Programming & Data Visualization
+
+- 11/8/2021 - MECC* 2021: Data Viz Workshop (in resources folder)
 
 
+
+*Modeling, Estimation and Control Conference
