@@ -23,7 +23,9 @@ The bulk of your work for the remaining weeks will be:
 
 #### Overview
 
-You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and the next steps. The length and level of detail of your report is up to you and depends on your time availability over the next four weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitHub by **December 10th**. For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
+You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and the next steps. The length and level of detail of your report is up to you and depends on your time availability over the next four weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitHub by **December 10th**. 
+
+For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
 
 The following content is recommended as a bare minimum:
 
@@ -38,38 +40,37 @@ The following content is recommended as a bare minimum:
 
 #### Style
 
-The report will be in the style of a Journal paper. Due to time limitations, you are recommended to focus on the *results* and *discussion* sections first. A literature review is recommended but not expected due to the limited time we have.
+The report will be in the style of a journal paper. Due to time limitations, you are recommended to focus on the *results* and *discussion* sections first. A literature review is recommended but not expected due to the limited time we have. You should still survey and cite at least 5 papers that are relevant to your work. This can be accomplished with a quick Google Search.
 
 Here are some reference papers that you can model your report from. Download these.
 - [ ] An article on coin cells: https://iopscience.iop.org/article/10.1149/2.0691614jes
 - [ ] An article on battery characterization: https://onlinelibrary.wiley.com/doi/full/10.1002/er.7445
 - [ ] Another article on battery characterization: https://www.mdpi.com/2313-0105/7/3/51
 
-Aside: how did I pick these papers? The topics for the papers are somewhat similar to the subject matter we are dealing with. The papers are also written in a way that I felt was approachable given the topics we covered. You will *not* find a perfect match between the topics covered in these papers and the topics we are writing about (otherwise what's the point of us writing about our papers?) The main purpose of providing these references is for you to get a general sense of what are the main sections in a paper, what do published figures look like, and the writing style for academic papers.
+Aside: how did I pick these papers? The topics for the papers are somewhat similar to the subject matter we are dealing with. The papers are also written in a way that I felt was approachable given the topics we covered. You will *not* find a perfect match between the topics covered in these papers and the topics we are writing about (otherwise what's the point of us writing about our papers?) The main purpose of providing these references is for you to get a general sense of the main sections in a paper, what do published figures look like, and the writing style for academic papers. You can also include these papers in your references if you feel they are relevant to your report.
 
 Instructions for downloading the papers:
 - Use the library: https://search.lib.umich.edu/onlinejournals
+- Save them locally as PDFs.
 
 Recommendation:
-- [ ] Download Mendeley, a reference manager. 
+- [ ] Download Mendeley, a popular reference manager. 
 - You will need Mendeley later to export a `.bib` file that will help you automate citations tracking in your report.
 - For every paper that you find, download the paper (PDF) onto your computer, then add it to your Mendeley library.
 
 #### Sections 
 
 - Summary or Abstract
-  - **Do this last**. As you start writing, the most important thing to keep in mind is "what are the main questions you are trying to answer with this report?"
+  - **Do this last**. As you start writing, the most important question to keep in mind is "what are the main questions you are trying to answer with this report?"
 
 - Introduction 
-  - Background
-  - Literature review
-  - Introduce the main knowledge gaps that you will address in this work. Why are they important questions to answer?
-  - Why do these knowledge gaps matter?
   - **Do this last**. 
+  - The introduction generally includes a background (for a 'skilled' reader) and a literature review of what was done in the past.
+  - Introduce the main knowledge gaps that you will address in this work. Why are they important questions to answer.
   
 - Experimental Methods
-  - Write down what you know about what was done. I will help fill in the details. Since you entered the project mid-way through, you are not expected to know every little detail about how the cells were prepared.
   - **Do this after Results and Discussion are compmleted.**
+  - Write down what you know about what was done experimentally. Cite other papers where relevant. Since you entered the project mid-way through, you are not expected to know every little detail about how the cells were prepared. I can help fill in the details if you ask.
   
 - Results
   - **This should take up at least 50% of your time.**
@@ -78,7 +79,7 @@ Recommendation:
   
 - Discussion 
   - **Do this after you complete a draft of the results section**. 
-  - Due to time constraints, you are not expected to provide a super insightful analysis (though that would also be great). The expectation is that you think about the results you present and share your thoughts here.
+  - Due to time constraints, you are not expected to provide a super insightful analysis (though you are obviously encouraged to do so). The expectation is that you think about the results you present and share your thoughts in this section.
   - Limitations
   - Assumptions
   - Future Work
@@ -88,20 +89,21 @@ Recommendation:
 
 #### Editing
 
-https://medium.com/creators-hub/how-to-use-writing-to-improve-your-thinking-22e09fa01e04
-
-To summarize, there are three stages of writing:
-
+Editing your writing is important. There are three stages of writing:
 1. Write for yourself
 2. Revise your message for people who care
 3. Proof for clarity
 
-Normally, steps (2) and (3) will take a significant amount of time to complete. While we are time-constrained on this project, I expect that you will go through steps (1-3) at least once with input from me.
+Normally, steps (2) and (3) will take a significant amount of time to complete. While we are time-constrained on this project, you should go through steps (1-3) at least once. I am here to help with steps (2) and (3) if you ask for help.
+
+Reference: https://medium.com/creators-hub/how-to-use-writing-to-improve-your-thinking-22e09fa01e04
 
 
 #### Formatting
 
-You will use Overleaf to write the report. Overleaf is an online LaTeX editor. LaTeX is a common typesetting system used for scientific documentation. LaTeX is useful when you have to write a lot of mathematical formulas. We will not spend time learning about how to type these formulas (and for your reports, there will not be many, if any, equations for you to worry about). I will provide you a template. In a future week, we will review the basics to get started with writing the report.
+You will use Overleaf to write the report. Overleaf is an online LaTeX editor. LaTeX is a common typesetting system used for scientific documentation. LaTeX is useful when you have to write a lot of mathematical formulas. We will not spend time learning about how to write formulas in LaTeX (and for your reports, there will not be many, if any, equations for you to worry about). 
+
+I will provide you a document template in the coming weeks. We may also review the basics to get started with writing the report.
 
 For now:
 
