@@ -1,5 +1,124 @@
 # Meeting Notes
 
+## 11/8/2021
+
+Today, we will discuss work assignment for the rest of the semester ending on Dec 10th.
+
+By the end of the semester, you will produce two products:
+
+1. A report in the style of a Journal paper
+2. The accompanying code that you wrote
+
+You will submit the work in the form of a Pull Request on Github. Details of the submission will be covered in a future week.
+
+We will spend the rest of this hour discussing some details of the content that is expected from the report and the tools you will use to generate it.
+
+The bulk of your work for the remaining weeks will be:
+
+1. Clearly defining the cell dataset and performance metrics you wish to analyze
+2. Writing the code necessary to make the plots for (1)
+3. Writing, editing, and submitting the report
+
+### Report Writing
+
+#### Overview
+
+You will write a report summarizing the purpose of your study, the main results you've found, your interpretation of the results, and what are the next steps. The length and level of detail of your report is up to you and depends on your time availability for the next 4 weeks. At minimum, a Pull Request with a report and the accompanying code must be submitted via GitBug by **December 10th**. For the content of the report, we will continue to work together on an individual basis to define what are the interesting results to report. During the one-on-one sessions for the upcoming weeks, we will keep in tight communication to define clearly what is reasonable to get done and what is beyond the scope for this semester.
+
+The following content is recommended as a bare minimum:
+
+1. All common sections of the report are included (see 'Report Sections').
+2. At least 5 figures
+3. At least 5 references
+4. The report addresses at least two research questions relating to your data
+5. Uner *results*, you present the data clearly (in a figure or a table)
+6. Under *discussion*, you provide a reasonable interpretation of what the data means and discuss implications
+7. Under *discussion*, you provide at least two next steps which logically follow from the analysis
+
+
+#### Style
+
+The report will be in the style of a Journal paper. Due to time limitations, you are recommended to focus on the *results* and *discussion* sections first. A literature review is recommended but not expected due to the limited time we have.
+
+Here are some reference papers that you can model your report from. Download these.
+- [ ] An article on coin cells: https://iopscience.iop.org/article/10.1149/2.0691614jes
+- [ ] An article on battery characterization: https://onlinelibrary.wiley.com/doi/full/10.1002/er.7445
+- [ ] Another article on battery characterization: https://www.mdpi.com/2313-0105/7/3/51
+
+Aside: how did I pick these papers? The topics for the papers are somewhat similar to the subject matter we are dealing with. The papers are also written in a way that I felt was approachable given the topics we covered. You will *not* find a perfect match between the topics covered in these papers and the topics we are writing about (otherwise what's the point of us writing about our papers?) The main purpose of providing these references is for you to get a general sense of what are the main sections in a paper, what do published figures look like, and the writing style for academic papers.
+
+Instructions for downloading the papers:
+- Use the library: https://search.lib.umich.edu/onlinejournals
+
+Recommendation:
+- [ ] Download Mendeley, a reference manager. 
+- You will need Mendeley later to export a `.bib` file that will help you automate citations tracking in your report.
+- For every paper that you find, download the paper (PDF) onto your computer, then add it to your Mendeley library.
+
+#### Sections 
+
+- Summary or Abstract
+  - **Do this last**. As you start writing, the most important thing to keep in mind is "what are the main questions you are trying to answer with this report?"
+
+- Introduction 
+  - Background
+  - Literature review
+  - Introduce the main knowledge gaps that you will address in this work. Why are they important questions to answer?
+  - Why do these knowledge gaps matter?
+  - **Do this last**. 
+  
+- Experimental Methods
+  - Write down what you know about what was done. I will help fill in the details. Since you entered the project mid-way through, you are not expected to know every little detail about how the cells were prepared.
+  - **Do this after Results and Discussion are compmleted.**
+  
+- Results
+  - **This should take up at least 50% of your time.**
+  - The main plots you generate should go into this section.
+  - In the text, describe that you observe.
+  
+- Discussion 
+  - **Do this after you complete a draft of the results section**. 
+  - Due to time constraints, you are not expected to provide a super insightful analysis (though that would also be great). The expectation is that you think about the results you present and share your thoughts here.
+  - Limitations
+  - Assumptions
+  - Future Work
+  
+- Conclusion 
+  - Summarize your main findings. Stick to facts, not speculation. Briefly outline the next steps.      
+
+#### Editing
+
+https://medium.com/creators-hub/how-to-use-writing-to-improve-your-thinking-22e09fa01e04
+
+To summarize, there are three stages of writing:
+
+1. Write for yourself
+2. Revise your message for people who care
+3. Proof for clarity
+
+Normally, steps (2) and (3) will take a significant amount of time to complete. While we are time-constrained on this project, I expect that you will go through steps (1-3) at least once with input from me.
+
+
+#### Formatting
+
+You will use Overleaf to write the report. Overleaf is an online LaTeX editor. LaTeX is a common typesetting system used for scientific documentation. LaTeX is useful when you have to write a lot of mathematical formulas. We will not spend time learning about how to type these formulas (and for your reports, there will not be many, if any, equations for you to worry about). I will provide you a template. In a future week, we will review the basics to get started with writing the report.
+
+For now:
+
+- [ ] Create an Overleaf account using your University of Michigan email.
+
+### Getting back to the data
+
+Let's take the remaining time to discuss the main questions we want to answer from the data and what are the relevant metrics that will help us answer these questions.
+
+### For future meetings
+
+- [ ] Overleaf tutorial: getting started with the project report
+- [ ] Strategies for effective data parsing using Python and Pandas
+- [ ] Equivalent circuit modeling for batteries
+- [ ] Electrode-specific state of health metrics
+
+
 ## 10/25/2021
 
 We discussed a few topics together:
