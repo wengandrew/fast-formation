@@ -10,8 +10,9 @@ Announcements:
 
 Topics covered today:
 
-1. Inserting figures and references in Overleaf
-2. Introduction to kinetic processes in lithium batteries
+1. Feedback: what's going well, what's not going well
+2. Inserting figures and references in Overleaf
+3. Introduction to kinetic processes in lithium batteries
   - Thermodynamics vs kinetics: where does battery 'resistance' come from?
     - Contribution from different battery components
       - inactive components (current collectors, tabs), electrolyte, active material (cathode, anode)
@@ -19,7 +20,7 @@ Topics covered today:
     - A closer look at the voltage response to a unit current step
   - Crash course on electrochemical impedance spectroscopy (EIS)
     - Separation of timescales: slow, fast
-3. HPPC data parsing
+4. HPPC data parsing
   - Scaling capacity from a coin cell to a full cell
 
 ## 11/8/2021
