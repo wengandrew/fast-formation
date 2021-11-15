@@ -1,5 +1,27 @@
 # Meeting Notes
 
+## 11/15/2021
+
+Announcements:
+
+- Four weeks remaining until reports are due (Dec 10th)
+  - Suggestion: finalize figures over next two weeks
+- All meetings this week will be held via Zoom
+
+Topics covered today:
+
+1. Inserting figures and references in Overleaf
+2. Introduction to kinetic processes in lithium batteries
+  - Thermodynamics vs kinetics: where does battery 'resistance' come from?
+    - Contribution from different battery components
+      - inactive components (current collectors, tabs), electrolyte, active material (cathode, anode)
+    - Separation of time scales: ohmic, charge transfer, diffusion
+    - A closer look at the voltage response to a unit current step
+  - Crash course on electrochemical impedance spectroscopy (EIS)
+    - Separation of timescales: slow, fast
+3. HPPC data parsing
+  - Scaling capacity from a coin cell to a full cell
+
 ## 11/8/2021
 
 Today, we will discuss work assignment for the rest of the semester.
