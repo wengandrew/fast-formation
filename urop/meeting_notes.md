@@ -1,5 +1,18 @@
 # Meeting Notes
 
+## 11/29/2021
+
+Announcements:
+
+- Requirements for report due on Dec 10th will be relaxed due to time constraints. More details will be shared in person.
+
+Topics covered today:
+
+- Review of sources of battery resistance
+- Derive OCV-R-RC model
+- A brief look into electrochemical impedance spectroscopy (EIS)
+
+
 ## 11/15/2021
 
 Announcements:
