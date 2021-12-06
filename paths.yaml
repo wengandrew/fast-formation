@@ -1,4 +1,4 @@
 # Configure data and output directories for the fast formation project
-data: '/Users/aweng/code/fast-formation/data/'
-outputs: '/Users/aweng/code/fast-formation/output/'
-documents: '/Users/aweng/code/fast-formation/documents/'
+data: '/Users/rogerho/Documents/battery/fast-formation-local/data/'
+outputs: '/Users/rogerho/Documents/battery/fast-formation-local/output/'
+documents: '/Users/rogerho/Documents/battery/fast-formation-local/documents/'
