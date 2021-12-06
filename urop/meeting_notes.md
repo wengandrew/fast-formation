@@ -1,5 +1,12 @@
 # Meeting Notes
 
+## 12/06/2021
+
+Topics covered today:
+
+- EIS
+
+
 ## 11/29/2021
 
 Announcements:
