@@ -5,6 +5,9 @@
 __pycache__/
 *__init__
 *.m~
-Icon
+Icon
+
+*.png
+src/figures
 from-suhak
 from-peyman
