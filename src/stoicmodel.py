@@ -208,7 +208,7 @@ def fetch_voltage_resistance_dataset(df_esoh, df_hppc,
     """
 
     # Declare shared capacity basis
-    shared_q = np.arange(-0.5, 3.01, 0.001)
+    shared_q = np.arange(-0.5, 3.01, 0.0001)
 
     ## Unpack the equilibrium voltage data
 
@@ -245,7 +245,7 @@ def fetch_voltage_resistance_dataset(df_esoh, df_hppc,
 
     # Build a higher fidelity, smooth signal for the toy model
     resistance = df_hppc['resistance_10s_ohm']
-    capacity_hifi = np.linspace(np.min(capacity), np.max(capacity), 300)
+    capacity_hifi = np.linspace(np.min(capacity), np.max(capacity), 2000)
     interp_fn = interpolate.interp1d(capacity, resistance,
                                      bounds_error=False,
                                      kind=resistance_interp_kind)
@@ -336,7 +336,7 @@ def fetch_voltage_resistance_dataset(df_esoh, df_hppc,
     """
 
     # Declare shared capacity basis
-    shared_q = np.arange(-0.5, 3.01, 0.001)
+    shared_q = np.arange(-0.5, 3.01, 0.0001)
 
     ## Unpack the equilibrium voltage data
 
@@ -373,7 +373,7 @@ def fetch_voltage_resistance_dataset(df_esoh, df_hppc,
 
     # Build a higher fidelity, smooth signal for the toy model
     resistance = df_hppc['resistance_10s_ohm']
-    capacity_hifi = np.linspace(np.min(capacity), np.max(capacity), 300)
+    capacity_hifi = np.linspace(np.min(capacity), np.max(capacity), 2000)
     interp_fn = interpolate.interp1d(capacity, resistance,
                                      bounds_error=False,
                                      kind=resistance_interp_kind)
@@ -602,6 +602,79 @@ def compute_useful_metrics(res, min_voltage, max_voltage, soc_target=0.05):
     return output_dict
 
 
+def plot_shift_animate(shift_mah, pos_shrink, neg_shrink, res_orig, metrics_orig,
+               target_soc, min_voltage, max_voltage, xlims):
+
+    res = voltage_resistance_transform(res_orig, shift_mah / 1000,
+                                       pos_shrink_loc='bottom',
+                                       neg_shrink_loc='top',
+                                       pos_shrink_frac=pos_shrink,
+                                       neg_shrink_frac=neg_shrink)
+
+
+    metrics = compute_useful_metrics(res, min_voltage, max_voltage, target_soc)
+
+    # Make the voltage plots
+    plt.subplot(2,1,1)
+
+    ax1 = plt.gca()
+    ax2 = plt.gca().twinx()
+
+    ax1.axvline(x=metrics['absolute_cap_at_target_soc'], color=COLOR_REF)
+    ax1.axvline(x=metrics_orig['absolute_cap_at_target_soc'], color=COLOR_REF, linestyle=':', linewidth=0.7)
+
+    l1 = ax1.plot(res['capacity'], res['pos_v'], color=COLOR_POS)
+    ax2.plot(res['capacity'], res['neg_v'], color=COLOR_NEG)
+    ax1.plot(res_orig['capacity'], res_orig['pos_v'], color=COLOR_POS, linestyle=':', linewidth=0.7)
+    ax2.plot(res_orig['capacity'], res_orig['neg_v'], color=COLOR_NEG, linestyle=':', linewidth=0.7)
+
+    ax1.plot(res['capacity'], res['pos_v'] - res['neg_v'],
+             color=COLOR_FULL)
+    ax1.plot(res_orig['capacity'], res_orig['pos_v'] - res_orig['neg_v'],
+             color=COLOR_FULL, linestyle=':', linewidth=0.7)
+
+    ax1.set_ylabel('Voltage (V)')
+    ax1.set_xlim(xlims)
+    ax1.set_ylim((2.6, 4.6))
+
+    ax1.set_xticklabels([])
+
+    ax2.tick_params(axis='y', colors=COLOR_NEG)
+    ax2.yaxis.label.set_color(COLOR_NEG)
+    ax2.spines["right"].set_edgecolor(COLOR_NEG)
+    ax2.set_ylabel('Voltage vs Li/Li$^+$ (V)')
+    ax2.set_ylim((0, 2.55))
+
+    # Make the resistance plot
+    plt.subplot(2,1,2)
+    ax3 = plt.gca()
+
+    ax3.axvline(x=metrics['absolute_cap_at_target_soc'], color=COLOR_REF)
+    ax3.axvline(x=metrics_orig['absolute_cap_at_target_soc'], color=COLOR_REF, linestyle=':', linewidth=0.7)
+
+    ax3.plot(res['capacity'], res['pos_r'] * 1000, color=COLOR_POS)
+    ax3.plot(res_orig['capacity'], res_orig['pos_r'] * 1000, color=COLOR_POS, linestyle=':', linewidth=0.7)
+    ax3.plot(res['capacity'], res['neg_r'] * 1000, color=COLOR_NEG)
+    ax3.plot(res_orig['capacity'], res_orig['neg_r'] * 1000, color=COLOR_NEG, linestyle=':', linewidth=0.7)
+    ax3.plot(res['capacity'], (res['pos_r'] + res['neg_r']) * 1000, color=COLOR_FULL)
+    ax3.plot(res_orig['capacity'], (res_orig['pos_r'] + res_orig['neg_r']) * 1000, color=COLOR_FULL, linestyle=':', linewidth=0.7)
+
+    # Put dots for the 5% SOC points
+    ax3.plot(metrics_orig['absolute_cap_at_target_soc'],
+             metrics_orig['resistance_at_target_soc'] * 1000, marker='o', color=[0.5, 0.5, 0.5])
+    ax3.plot(metrics['absolute_cap_at_target_soc'],
+             metrics['resistance_at_target_soc'] * 1000, marker='o', color='black')
+
+    ax3.set_xlabel('Capacity (Ah)')
+    ax3.set_ylabel('R$_{10s}$ (m$\Omega$)')
+    ax3.set_xlim(xlims)
+    ax3.set_ylim((0, 55))
+
+    plt.tight_layout()
+
+    return l1
+
+
 def plot_shift(shift_mah, pos_shrink, neg_shrink, res_orig, metrics_orig,
                target_soc, min_voltage, max_voltage, xlims):
 
@@ -614,7 +687,7 @@ def plot_shift(shift_mah, pos_shrink, neg_shrink, res_orig, metrics_orig,
 
     metrics = compute_useful_metrics(res, min_voltage, max_voltage, target_soc)
 
-    plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(6, 6))
 
     # Make the voltage plots
     plt.subplot(2,1,1)
@@ -638,14 +711,15 @@ def plot_shift(shift_mah, pos_shrink, neg_shrink, res_orig, metrics_orig,
 #     ax1.set_xlabel('Capacity (Ah)')
     ax1.set_ylabel('Voltage (V)')
     ax1.set_xlim(xlims)
-    ax1.set_ylim((2.6, 4.6))
+    ax1.set_ylim((2.6, 4.0))
 
     ax1.set_xticklabels([])
-
+    ax1.legend([f'$\Delta Q_{{LLI}}$ = {shift_mah} mAh'], loc='center right', frameon=False,
+            handlelength=0, fontsize='small')
     ax2.tick_params(axis='y', colors=COLOR_NEG)
     ax2.yaxis.label.set_color(COLOR_NEG)
     ax2.spines["right"].set_edgecolor(COLOR_NEG)
-    ax2.set_ylabel('Voltage vs Li/Li$^+$ (V)')
+    ax2.set_ylabel('Potential vs Li/Li$^+$ (V)')
     ax2.set_ylim((0, 2.55))
 
 #     metrics2 = compute_useful_metrics(res, target_soc - 0.00278)
@@ -691,8 +765,9 @@ def plot_shift(shift_mah, pos_shrink, neg_shrink, res_orig, metrics_orig,
 
     plt.xlabel('Capacity (Ah)')
     plt.ylabel('R$_{10s}$ (m$\Omega$)')
-#     plt.legend([f'R$_{{10s,{target_soc*100}\%SOC}}$ = {resistance_at_target_soc * 1000 :.1f} m$\Omega$'],
-#                handlelength=0, frameon=False)
+    plt.legend([f'R$_{{10s,{target_soc*100}\%SOC}}$ = {metrics["resistance_at_target_soc"] * 1000 :.1f} m$\Omega$'], handlelength=0, frameon=False, fontsize='small')
     plt.xlim(xlims)
     plt.ylim((0, 55))
     plt.tight_layout()
+
+    return fig
