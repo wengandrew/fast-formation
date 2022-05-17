@@ -118,6 +118,8 @@ def get_label_registry():
     label_registry['cycles_to_60_pct'] = ('Cycles to 60%', (None, None))
     label_registry['cycles_to_50_pct'] = ('Cycles to 50%', (None, None))
     label_registry['thickness_mm'] = ('Thickness (mm)', (None, None))
+    label_registry['initial_capacity'] = ('Initial Capacity (Ah)', (None, None))
+    label_registry['c20_dch_cap_at_c3_ah'] = ('Initial C/20 Capacity (Ah)', (None, None))
     label_registry['esoh_c3_Cn'] = ('$C_n$, c3 (Ah)', (1.9, 3.0))
     label_registry['esoh_c56_Cn'] = ('$C_n$, c56 (Ah)', (1.9, 3.0))
     label_registry['esoh_c159_Cn'] = ('$C_n$, c159 (Ah)', (1.9, 3.0))
