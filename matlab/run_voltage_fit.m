@@ -1,15 +1,24 @@
-function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data, Un, Up)
+function [Xt, RMSE_V, Q, Vt, dVdQ] = run_voltage_fit(Q_data, V_data, Un, Up)
     % Takes in charge data and returns electrode-level parameters
     %
     % Args:
     %   Q_data:  charge capacity
-    %   V_data: voltage data
-    %   type: 'original', 'formation_ht', 'formation_rt'
+    %   V_data:  charge voltage
+    %   Un:      negative electrode potential function
+    %   Up:      positive electrode potential function
     %
     % Outputs:
-    %   Xt: output vector of parameters (5 x 1)
-    %   RMSE_V: 
-    
+    %   Xt:      output vector of parameters (5 x 1)
+    %   RMSE_V:  
+    %
+    % X(1): y100, positive stoic at Q = 0
+    % X(2): Cp,   positive electrode capacity, Cp (Ah)
+    % X(3): x100, negative stoic at Q = 0
+    % X(4): Cn,   negative electrode capacity, Cn (Ah), 
+    % X(5): Q_compensation for V_min constraint
+    %
+    % e.g. Vmin is actually 3.05V and it needs to be 3.00V
+   
 
     % Flip the vectors so that the "charge" becomes a "discharge"
     % After this, Q = 0 corresponds to Vmax ~ 4.2V
@@ -22,12 +31,6 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     %
     % Intuition:
     %   if Q = 0 --> X(1) and X(3) are left
-    %
-    % X(1): y100, positive stoic at Q = 0
-    % X(2): Cp,   positive electrode capacity, Cp (Ah)
-    % X(3): x100, negative stoic at Q = 0
-    % X(4): Cn,   negative electrode capacity, Cn (Ah), 
-    % X(5): Q_compensation for V_min constraint, e.g. Vmin is actually 3.05V and it needs to be 3.00V
 
     % This is the voltage model
     V = @(X, Q) Up(X(1) + Q / X(2)) - Un(X(3) - Q / X(4));
@@ -35,9 +38,13 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     % Scaling the input params which have different units
     S = [1; 1/6; 1; 1/6; 1];
     
-    Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
-    lb = [0.0235; 1.00; 0.80 ; 1.0 ; 0.00] .* S;
-    ub = [0.0435; 3.5;  0.95 ; 2.85 ; 0.00] .* S;
+%     Xi = [0.0335; 2.70; 0.80 ; 2.7 ; 0.00] .* S;
+%     lb = [0.0235; 1.00; 0.80 ; 1.0 ; 0.00] .* S;
+%     ub = [0.0435; 3.5;  0.95 ; 2.85 ; 0.00] .* S;
+
+    Xi = [0.0335; 5.5; 0.80 ; 5.5 ; 0.00] .* S;
+    lb = [0.0235; 2.0; 0.80 ; 2.0 ; 0.00] .* S;
+    ub = [0.0435; 7.0; 0.95 ; 7.0 ; 0.00] .* S;
 
     % V: model
     % Vt_data: data
@@ -48,7 +55,8 @@ function [Xt, RMSE_V, Q, Vt, dVdQ] = diagnostics_Qs_voltage_only(Q_data, V_data,
     Q_fit = Q_data(idx);
 
     fun = @(X) (V(X ./ S, Q_fit) - V_fit)' * (V(X ./ S, Q_fit) - V_fit);
-    
+   
+    % Impose nonlinear constraints if any
     nonCon = @(X) connon(X ./ S, 4.20, 3.0, max(Q_fit), Up, Un);
 
     options = optimoptions('fmincon', ...

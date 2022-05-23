@@ -1,27 +1,21 @@
-function plot_summary_esoh_table()
+function plot_summary_esoh_table_peyman()
 
-    % Configure your own path here; this will be different for you
-    root_path = 'C:/Users/wenga/Documents/fast-formation/';
-    output_path = [root_path 'outputs/2021-04-12-formation-esoh-fits/'];
+    % Configure your paths here; this will be different for you
+    root_path = 'C:/Users/wenga/Documents/expansion-peyman-2021/';
+    output_path = [root_path 'outputs/2022-05-18-esoh-fits/'];
     tbl = readtable([output_path 'summary_esoh_table.csv']);
    
     % Get rid of high RMS data points
 %     RMSE_THRESHOLD_MV = 120;
 %     idx = find(tbl.RMSE_mV < RMSE_THRESHOLD_MV);
 %     tbl = tbl(idx, :);
-    
-    % Get rid of unwanted cellids
-    idx = find(tbl.cellid == 9);
-    tbl(idx, :) = [];
   
     set_default_plot_settings_manuscript();
     set(0, 'DefaultAxesFontSize', 17)
 
-    plot_helper_state_variables('HT', tbl)
-    plot_helper_state_variables('RT', tbl)
+    plot_helper_state_variables(tbl)
     
-    plot_helper_degradation_metrics('HT', tbl)
-    plot_helper_degradation_metrics('RT', tbl)
+    plot_helper_degradation_metrics(tbl)
     
 %     plot_helper_degradation_correlations('RT', tbl)
 %     plot_helper_degradation_correlations('HT', tbl)
@@ -69,12 +63,12 @@ function plot_helper_degradation_correlations(plot_type, tbl)
 end
 
 
-function plot_helper_degradation_metrics(plot_type, tbl)
+function plot_helper_degradation_metrics(tbl)
     % Plot of C/20 Loss, LAM_PE, LAM_NE, and LLI
     % Against cycle count
     
 %     YLIM = [1.5 3];
-    YLIM = [0 15];
+    YLIM = [0 30];
     XLIM = [0 500];
     fh = figure('Position', [0 0 1300 400]);
 
@@ -112,11 +106,8 @@ function plot_helper_degradation_metrics(plot_type, tbl)
     for i = 1:numel(cellids)
 
         cellid = cellids(i);
-        config = get_cellid_config(cellid);
-
-        if ~strcmpi(config.temperature, plot_type)
-            continue
-        end
+        config.color = 'k';
+        config.linestyle = '-';
 
         idx = find(tbl.cellid == cellid);
         this_tbl = tbl(idx, :);
@@ -146,7 +137,7 @@ function plot_helper_degradation_metrics(plot_type, tbl)
         % FILTER OUT RESULTS EXCEEDING SOME THRESHOLD
         LOSS_THRESHOLD = 1;
         
-        marker_size = 4;
+        marker_size = 2;
         
 %         line(this_tbl.cycle_number, Q_full, ...
         line(this_tbl.cycle_number, c20_loss.*100, ...
@@ -179,7 +170,8 @@ function plot_helper_degradation_metrics(plot_type, tbl)
         idx = find(lli < LOSS_THRESHOLD);
         %         line(this_tbl.cycle_number, n_li, ...
         line(this_tbl.cycle_number(idx), lli(idx).*100, ...
-            'Marker', 'o', 'Parent', ax4, ...
+            'Marker', 'o', ...
+            'Parent', ax4, ...
             'Color', config.color, ...
             'MarkerFaceColor', config.color, ...
             'LineStyle', config.linestyle, ...
@@ -194,13 +186,13 @@ function plot_helper_degradation_metrics(plot_type, tbl)
 
     tightfig()
     
-    saveas(fh, sprintf('esoh_features_deg_all_cells_%s.png', plot_type))
-    saveas(fh, sprintf('esoh_features_deg_all_cells_%s.fig', plot_type))
+    saveas(fh, sprintf('esoh_features_deg_all_cells.png'))
+    saveas(fh, sprintf('esoh_features_deg_all_cells.fig'))
     
     
 end
 
-function plot_helper_state_variables(plot_type, tbl)
+function plot_helper_state_variables(tbl)
 
     fh_summary = figure('Position', [0 0 800 1800]);
 
@@ -211,18 +203,20 @@ function plot_helper_state_variables(plot_type, tbl)
                 'np_ratio', 'n_li', 'RMSE_mV', 'Qcomp', ...
                 'Cn_pf', 'x100_pf'};
 
-    varlabels = {'y_{100}', 'x_{100}', 'y_0', 'x_0', ...
-                 'C_p (Ah)', 'C_n (Ah)', 'C_{p,excess} (Ah)', 'C_{n,excess} (Ah)', ...
+    varlabels = {'y_{100}', 'x_{100}', ...
+                 'y_0', 'x_0', ...
+                 'C_p (Ah)', 'C_n (Ah)', ...
+                 'C_{p,excess} (Ah)', 'C_{n,excess} (Ah)', ...
                  'C_n / C_p', 'n_{Li} (moles)', 'RMSE_mV', 'Q_{comp}', ...
                  'C_{n,PF} (Ah)', 'x_{100, PF}'};
    
     ylims = {[0 0.05], [0.75 1], ...
              [0.6, 1], [0 0.05], ...
-             [1.5 3], [1.5 3], ...
-             [0 0.8], [0 0.8], ...
+             [3 6], [3 6], ...
+             [0 2], [0 2], ...
              [0.5 1.10], [0.03 0.10], [0 150], ...
              [-0.05 0.05], ...
-             [1.5 3], [0.75 1]};
+             [3 6], [0.75 1]};
          
     % Axis declaration
     for i = 1:numel(varnames)
@@ -241,16 +235,14 @@ function plot_helper_state_variables(plot_type, tbl)
     for i = 1:numel(cellids)
 
         cellid = cellids(i);
-        config = get_cellid_config(cellid);
-
-        if ~strcmpi(config.temperature, plot_type)
-            continue
-        end
+        config.color = 'k';
+        config.linestyle = '-';
 
         idx = find(tbl.cellid == cellid);
         this_tbl = tbl(idx, :);
 
         [~, is] = sort(this_tbl.cycle_number);
+        
         for i = 1:numel(varnames)
 
             varname = varnames{i};
@@ -258,10 +250,9 @@ function plot_helper_state_variables(plot_type, tbl)
             curr_vals = this_tbl.(varname);
             line(this_tbl.cycle_number(is), curr_vals(is), ...
             'Marker', 'o', ...
-            'Parent', ax(i), ...
-            'Color', config.color, ...
-            'MarkerFaceColor', config.color, ...
             'MarkerSize', 2, ...
+            'Parent', ax(i), 'Color', config.color, ...
+            'MarkerFaceColor', config.color, ...
             'LineStyle', config.linestyle)
            
         end
@@ -270,7 +261,7 @@ function plot_helper_state_variables(plot_type, tbl)
 
     linkaxes(ax, 'x')
     
-    saveas(fh_summary, sprintf('esoh_features_all_cells_%s_1.png', plot_type))
-    saveas(fh_summary, sprintf('esoh_features_all_cells_%s_1.fig', plot_type))
+    saveas(fh_summary, sprintf('esoh_features_all_cells_peyman_1.png'))
+    saveas(fh_summary, sprintf('esoh_features_all_cells_peyman_1.fig'))
 
 end

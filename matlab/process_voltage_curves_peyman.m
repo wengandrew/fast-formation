@@ -1,15 +1,18 @@
-function process_voltage_curves()
-    % Takes in voltage data and run it through the eSOH model to get POS,
-    % NEG, and LLI losses
+function process_voltage_curves_peyman()
+    % Process voltage curves from Peyman's dataset.
 
     set_default_plot_settings_manuscript();
 
     % Set paths
-    root_path = 'C:/Users/wenga/Documents/fast-formation/';
-    input_path = [root_path 'data/2020-10-diagnostic-test-c20'];
-    output_path = [root_path 'outputs/2022-05-18-formation-esoh-fits'];
+    root_path = 'C:/Users/wenga/Documents/expansion-peyman-2021/';
+    input_path = [root_path 'data/'];
+    output_path = [root_path 'outputs/2022-05-18-esoh-fits/'];
 
-    cellid_array = 1:1:40;
+    if ~exist(output_path)
+        mkdir(output_path)
+    end
+
+    cellid_array = 1:1:21;
 
     % Initialize accumulator arrays
     all_cellid = [];
@@ -37,10 +40,13 @@ function process_voltage_curves()
     for jdx = 1:numel(cellid_array)
 
         cellid = cellid_array(jdx);
-        regex = sprintf('diagnostic_test_cell_%g_.*_charge', cellid);
-        file_list = find_files(input_path, regex);
-        cell_config = get_cellid_config(cellid);
-
+        
+        file_name = sprintf('%02d/OCV_wExpansion.csv', cellid);
+        
+        data = readtable([input_path file_name]);
+        
+        unique_cycles = unique(data.CycleNumber);
+        
         [Un, Up] = get_electrode_models('original');
 
         curr_n_li = [];
@@ -48,39 +54,35 @@ function process_voltage_curves()
         curr_Cn = [];
         curr_c20_cap = [];
         
-        for idx = 1:numel(file_list)
+        for idx = 1:numel(unique_cycles)
 
-            input_filename = file_list{idx};
-
-            cyc_id = parse_cycle_index_from_filename(input_filename);
+            cyc_id = unique_cycles(idx);
 
             output_filename = sprintf('cell_%g_cyc_%g', cellid, ...
                                 cyc_id);
 
-            if cyc_id > 500
-                continue
-            end
+            % Filter for charge data for current cycle
+            curr_data = data(find(data.CycleNumber == cyc_id), :);
+            curr_data = curr_data(find(curr_data.Current_mA_ > 0), :);
 
-            raw_data = readtable(input_filename);
 
             % Run the eSOH algorithm(s) to get the results file
-            res = run_esoh(raw_data.chg_capacity, raw_data.chg_voltage, Un, Up);
+            res = run_esoh(curr_data.Capacity_Ah_, curr_data.Voltage_V_, Un, Up);
 
             write_to_json(res, output_path, output_filename)
 
             fh = figure();
 
             ax1 = subplot(211); grid on; box on;
-            line(raw_data.chg_capacity, raw_data.chg_voltage, 'Color', 'k')
+            line(curr_data.Capacity_Ah_, curr_data.Voltage_V_, 'Color', 'k')
             line(res.ful.Q, res.ful.V, 'Color', 'k', 'LineStyle', '--')
             line(res.pos.Q, res.pos.V, 'Color', 'b', 'LineStyle', '-')
             line(res.neg.Q, res.neg.V, 'Color', 'r', 'LineStyle', '-')
             xlabel('Capacity (Ah)')
             ylabel('Voltage (V)')
             ylim([0 5])
-            xlim([-1 3])
-            title({sprintf('cell %g (%s), cycle %g', ...
-                cellid, cell_config.group, cyc_id), ...
+            title({sprintf('cell %g, cycle %g', ...
+                cellid, cyc_id), ...
                 soh_parameters_to_string_1(res), ...
                 soh_parameters_to_string_2(res)}, ...
                 'FontWeight', 'normal', ...
@@ -88,21 +90,28 @@ function process_voltage_curves()
             lh = legend('Experiment', 'Model', 'Model (Pos)', 'Model (Neg)');
             set(lh, 'Location', 'East', 'Color', 'w')
 
+            n = round(numel(curr_data.Voltage_V_)/300);
+            voltage = downsample(curr_data.Voltage_V_, n);
+            capacity = downsample(curr_data.Capacity_Ah_, n);
+            dvdq = gradient(voltage) ./ gradient(capacity);
+
             ax2 = subplot(212); grid on; box on;
-            line(raw_data.chg_capacity, raw_data.chg_dvdq, 'Color', 'k')
+            line(capacity, dvdq, 'Color', 'k')
             line(res.ful.Q, res.ful.dVdQ, 'Color', 'k', 'LineStyle', '--')
             line(res.pos.Q, res.pos.dVdQ, 'Color', 'b', 'LineStyle', '-')
             line(res.neg.Q, res.neg.dVdQ, 'Color', 'r', 'LineStyle', '-')
             ylim([0 0.8])
             xlabel('Capacity (Ah)')
             ylabel('|dV/dQ|')
+            xlim([-2 7])
+
 
             linkaxes([ax1 ax2], 'x')
 
             tightfig();
 
-            saveas(fh, sprintf('%s/%s.png', output_path, output_filename))
-            saveas(fh, sprintf('%s/%s.fig', output_path, output_filename))
+            saveas(fh, sprintf('%s%s.png', output_path, output_filename))
+            saveas(fh, sprintf('%s%s.fig', output_path, output_filename))
 
             close(fh)
 
@@ -157,10 +166,9 @@ function process_voltage_curves()
             'LLI', 'LAM_PE', 'LAM_NE', 'C20_loss', ...
             'Cn_pf', 'x100_pf'});
 
-    writetable(results_table, '../output/summary_esoh_table.csv');
+    writetable(results_table, [output_path 'summary_esoh_table.csv']);
 
     plot_summary_esoh_table();
-
 
 end
 

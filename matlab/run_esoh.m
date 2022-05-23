@@ -1,9 +1,10 @@
-function result = run_esoh(tbl, Un, Up)
+function result = run_esoh(charge_capacity, charge_voltage, Un, Up)
     % Run electrode-level SOH algorithm on a dataset.
     % Also do some post-processing.
     %
     % Args
-    %   tbl: the dataset as a MATLAB table
+    %   charge_capacity
+    %   charge_voltage
     %   Un: negative electrode model function
     %   Up: positive electrode model function
     %
@@ -12,15 +13,15 @@ function result = run_esoh(tbl, Un, Up)
 
     F = 96485; % Faraday's constants
     
-    voltage = tbl.chg_voltage;
-    capacity = tbl.chg_capacity;
+    voltage = charge_voltage;
+    capacity = charge_capacity;
 
     % Run the PeakFind algorithm and unpack the parameters
     [Cn_peak_find, x100_peak_find] = solve_using_peak_find(capacity, voltage);
 
     % Run the eSOH algorithm and unpack the parameters
     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
-        diagnostics_Qs_voltage_only(capacity, voltage, Un, Up);
+        run_voltage_fit(capacity, voltage, Un, Up);
 
     [pos_pot, pos_pot_dvdq] = calculate_pos(ful_cap, Xt, Up);
     [pos_pot, pos_cap, pos_pot_dvdq] = expand_pos(pos_pot, ful_cap, Xt, Up);
@@ -196,10 +197,15 @@ function [Cn, x100] = solve_using_peak_find(capacity, voltage)
     Q1_REF = 0.129; % Peak 1 position based on 'original' Un
     Q2_REF = 0.49 ; % Peak 2 position based on 'original' Un
 
-    [p1_idx, p2_idx] = find_peaks(capacity, voltage);
-
+    try
+        [p1_idx, p2_idx] = find_peaks(capacity, voltage);
+    catch
+        Cn = nan;
+        x100 = nan;
+        return 
+    end
+    
     Cn = (capacity(p2_idx) - capacity(p1_idx)) / (Q2_REF - Q1_REF);
-
     x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
 
 end
