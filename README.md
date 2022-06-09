@@ -29,7 +29,7 @@ pip install -r requirements.txt
 The raw battery data is not stored in this repo. Download a copy of the data [here](https://doi.org/10.7302/pa3f-4w30).
 
 
-#### Set up I/O folders
+#### Set up input/output folders
 
 Modify `paths.yaml` to point to your local paths. For example:
 
@@ -53,11 +53,22 @@ python -m pytest
 
 This will make sure that your paths and environment are set up correctly.
 
+## Getting Started: Correlations Matrix
+
+![Example correlations matrix](./notebooks/imgs/example_correlation_matrix.png)
+
+## Getting Started: Voltage Fitting Analysis
+
+![Example correlations matrix](./notebooks/imgs/example_dvdq.png)
+
+
+## Details
+
 #### Regenerating core datasets (if needed)
 
 A few key operations for re-generating core datasets:
 
-- `process_voltage_curves.m` will return a `.csv` file containing eSOH metrics
+- `process_voltage_curves.m` will return a `.csv` file containing electrode-specific state of health (eSOH) metrics
    on each cell (`summary_esoh_table.csv`)
 
 For correlation studies, first build the correlation table:
