@@ -71,7 +71,7 @@ python
 The output file will be dumped in the specified output directory, e.g
 `output/correlations.csv`.
 
-A cached copy of the output file is available as part of the [dataset](https://doi.org/10.7302/pa3f-4w30), e.g. `outputs/correlation_data.csv`.
+A cached copy of the output file is available as part of the [dataset](https://doi.org/10.7302/pa3f-4w30), e.g. `output/correlations.csv`.
 
 
 ## Getting Started: Voltage Fitting Analysis
