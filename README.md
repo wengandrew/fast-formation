@@ -61,7 +61,6 @@ This will make sure that your paths and environment are set up correctly.
 
 ![Example correlations matrix](./notebooks/imgs/example_dvdq.png)
 
-
 ## Details
 
 #### Regenerating core datasets (if needed)
