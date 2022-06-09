@@ -55,11 +55,11 @@ This will make sure that your paths and environment are set up correctly.
 
 ## Getting Started: Correlations Matrix
 
-![Example correlations matrix](./notebooks/imgs/example_correlation_matrix.png)
+![Example correlations matrix](../main/assets/example_correlation_matrix.png)
 
 ## Getting Started: Voltage Fitting Analysis
 
-![Example correlations matrix](./notebooks/imgs/example_dvdq.png)
+![Example correlations matrix](../main/assets/example_dvdq.png)
 
 
 ## Details
