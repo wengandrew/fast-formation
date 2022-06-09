@@ -1,6 +1,7 @@
 function result = run_esoh(charge_capacity, charge_voltage, Un, Up)
     % Run electrode-level SOH algorithm on a dataset.
-    % Also do some post-processing.
+    % Also do some post-processing to compute features (e.g. dvdq, excess
+    % capacities).
     %
     % Args
     %   charge_capacity
@@ -17,7 +18,7 @@ function result = run_esoh(charge_capacity, charge_voltage, Un, Up)
     capacity = charge_capacity;
 
     % Run the PeakFind algorithm and unpack the parameters
-    [Cn_peak_find, x100_peak_find] = solve_using_peak_find(capacity, voltage);
+    [Cn_peak_find, x100_peak_find] = calculate_neg_loss_peakfind(capacity, voltage);
 
     % Run the eSOH algorithm and unpack the parameters
     [Xt, RMSE_V, ful_cap, ful_pot, ful_dvdq_pot] = ...
@@ -63,6 +64,7 @@ function result = run_esoh(charge_capacity, charge_voltage, Un, Up)
     result.RMSE_mV = RMSE_V*1000;
     result.Cn_pf = Cn_peak_find;
     result.x100_pf = x100_peak_find;
+    result.Cp_min = min(pos_cap);
     
     % Full cell model curves
     result.ful.Q = ful_cap;
@@ -94,9 +96,10 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, Up)
     POS_MAX_VOLTAGE = 4.5;
     POS_MIN_VOLTAGE = 2.5;
 
-    diff = cap(2) - cap(1);
-
     min_cap = min(cap);
+
+    diff = 0.0001; % Amp-hours
+
     while Up(Xt(1) + min_cap / Xt(2)) < POS_MAX_VOLTAGE
         min_cap = min_cap - diff;
     end
@@ -112,8 +115,8 @@ function [pot_full, cap_full, pot_dvdq_full] = expand_pos(pot, cap, Xt, Up)
 
     % Translate the capacity to curve to align with orig data
     Q1 = min(cap_full);
-    Q2 = cap_full(abs(pot_full - min(pot)) < 1e-9) - ...
-         cap_full(abs(pot_full - min(pot_full)) < 1e-9);
+    Q2 = cap_full(find(abs(pot_full - min(pot)) < 1e-9, 1)) - ...
+         cap_full(find(abs(pot_full - min(pot_full)) < 1e-9, 1));
     cap_full = cap_full - Q1 - Q2;
 
 end
@@ -125,9 +128,10 @@ function [pot_full, cap_full_shifted, pot_dvdq_full] = expand_neg(pot, cap, Xt, 
     NEG_MAX_VOLTAGE = 1.0;
     NEG_MIN_VOLTAGE = 0;
 
-    diff = cap(2) - cap(1);
-
     min_cap = min(cap);
+    
+    diff = 0.0001; % Amp-hours
+    
     while Un(Xt(3) - min_cap / Xt(4)) > NEG_MIN_VOLTAGE
         min_cap = min_cap - diff;
     end
@@ -148,9 +152,10 @@ function [pot_full, cap_full_shifted, pot_dvdq_full] = expand_neg(pot, cap, Xt, 
         % No expansion needed
         Q2 =  0;
     else
-        Q2 = cap_full(abs(pot_full - max(pot)) < 1e-9) - ...
-         cap_full(abs(pot_full - max(pot_full)) < 1e-9);
+        Q2 = cap_full(find(abs(pot_full - max(pot)) < 1e-9, 1)) - ...
+             cap_full(find(abs(pot_full - max(pot_full)) < 1e-9, 1));
     end
+
     cap_full_shifted = cap_full - Q1 - Q2;
 
 end
@@ -182,7 +187,7 @@ function [pot, dvdq] = calculate_pos(cap, Xt, Up)
 
 end
 
-function [Cn, x100] = solve_using_peak_find(capacity, voltage)
+function [Cn, x100] = calculate_neg_loss_peakfind(capacity, voltage)
     % Solve for the negative electrode capacity and x100 using the
     % "peak-finding" method.
     %
@@ -209,3 +214,5 @@ function [Cn, x100] = solve_using_peak_find(capacity, voltage)
     x100 = Q2_REF + (max(capacity) - capacity(p2_idx))./Cn;
 
 end
+
+

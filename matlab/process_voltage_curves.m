@@ -27,6 +27,7 @@ function process_voltage_curves()
     all_RMSE_mV = [];
     all_np_ratio = [];
     all_n_li = [];
+    all_n_li_graphical = [];
     all_LLI = [];
     all_LAM_PE = [];
     all_LAM_NE = [];
@@ -45,6 +46,7 @@ function process_voltage_curves()
 
         curr_n_li = [];
         curr_Cp = [];
+        curr_Cp_min = [];
         curr_Cn = [];
         curr_c20_cap = [];
         
@@ -127,6 +129,7 @@ function process_voltage_curves()
             
             curr_Cp(idx, 1) = res.Cp;
             curr_Cn(idx, 1) = res.Cn;
+            curr_Cp_min(idx, 1) = res.Cp_min;
             curr_n_li(idx, 1) = res.n_li;
             curr_c20_cap(idx, 1) = max(res.ful.Q);
 
@@ -136,6 +139,11 @@ function process_voltage_curves()
         all_LAM_PE = [all_LAM_PE ; 1 - curr_Cp ./ curr_Cp(1)];
         all_LAM_NE = [all_LAM_NE ; 1 - curr_Cn ./ curr_Cn(1)];
         all_c20_loss = [all_c20_loss ; curr_c20_cap ./ curr_c20_cap(1)];
+
+        % Calculate the LLI based on the graphical method
+        delta_Cp_min = curr_Cp_min(1) - curr_Cp_min;
+        curr_n_li_graphical = curr_n_li(1) - delta_Cp_min * 3600 / 96485.3321;
+        all_n_li_graphical = [all_n_li_graphical ; curr_n_li_graphical];
 
     end % loop over cellids
 
@@ -147,7 +155,7 @@ function process_voltage_curves()
          all_Qfull, all_pos_excess, all_neg_excess, ...
          all_RMSE_mV, all_np_ratio, all_n_li, ...
          all_LLI, all_LAM_PE, all_LAM_NE, all_c20_loss, ...
-         all_Cn_pf, all_x100_pf, ...
+         all_Cn_pf, all_x100_pf, all_n_li_graphical,...
          'VariableNames', {'cellid', 'cycle_number', ...
             'y100', 'Cp', ...
             'x100', 'Cn', ...
@@ -155,9 +163,9 @@ function process_voltage_curves()
             'Qfull', 'pos_excess', 'neg_excess', ...
             'RMSE_mV', 'np_ratio', 'n_li', ...
             'LLI', 'LAM_PE', 'LAM_NE', 'C20_loss', ...
-            'Cn_pf', 'x100_pf'});
+            'Cn_pf', 'x100_pf', 'n_li_graphical'});
 
-    writetable(results_table, '../output/summary_esoh_table.csv');
+    writetable(results_table, output_path);
 
     plot_summary_esoh_table();
 
