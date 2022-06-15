@@ -66,12 +66,20 @@ python
 >>> build_correlation_table()
 ```
 
-`build_correlation_table()` will take in a `summary_esoh_table.csv` and return an augmented table containing the complete feature-set.
+`export_correlation_table()` returns a large .csv file containing the data for the correlations table. The table is generated in the following way:
+
+1. Using `formation.py` to interface with the raw test data and extract
+   features from both beginning-of-life and over age.
+2. Read in data from `summary_esoh_table.csv`, which is an output from the
+   MATLAB tools used to run the voltage fitting algorithm to extract
+   electrode-specific state of health (eSOH) metrics such as electrode
+   capacities and lithium loss rates. 
+3. Concatenate the results from (1) and (2) into a final .csv file.
 
 The output file will be dumped in the specified output directory, e.g
-`output/correlations.csv`.
+`output/correlations_data.csv`.
 
-A cached copy of the output file is available as part of the [dataset](https://doi.org/10.7302/pa3f-4w30), e.g. `output/correlations.csv`.
+A cached copy of the output file is available as part of the [dataset](https://doi.org/10.7302/pa3f-4w30), e.g. `output/correlations_data.csv`. This version will not contain the latest updates to the source code.
 
 
 ## Getting Started: Voltage Fitting Analysis
