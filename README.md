@@ -1,28 +1,16 @@
 # Fast Formation Project
 
-Last Updated 10/4/2021.
-
 Andrew Weng
 
-Code and analysis results for the fast formation study.
+This respository contains source code and analysis notebooks for a study on the impact of fast battery formation protocols on battery lifetime. The dataset of 40 pouch cells built, formed, and cycled at University of Michigan Battery Lab.
 
-Dataset consists of 40 pouch cells built, formed, and cycled at UM Battery Lab.
+## Python: Getting Started
 
-Data exported from [Voltaiq](https://voltaiq.co).
-
-
-## Getting Started
-
-First, set up a virtual environment (e.g. using `pyenv`) for this project.
-
-The code runs on Python 3.8.8.
-
-Inside your virtual environment, install the necessary packages using:
+Most of the code is written in Python (3.8.8). To set up your programming environment, first create a virtual environment (e.g. using `pyenv`). Inside your virtual environment, install the necessary packages using
 
 ```
 pip install -r requirements.txt
 ```
-
 
 #### Download the raw data files
 
@@ -31,7 +19,7 @@ The raw battery data is not stored in this repo. Download a copy of the data [he
 
 #### Set up input/output folders
 
-Modify `paths.yaml` to point to your local paths. For example:
+To tell the source code where you are keeping your raw data files, modify `paths.yaml` to point to your local paths. For example:
 
 ```
 
@@ -41,7 +29,7 @@ Modify `paths.yaml` to point to your local paths. For example:
 
 ```
 
-#### Python: Test your environment
+#### Test your environment
 
 Start in the root directory of the repository.
 
