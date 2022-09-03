@@ -7,6 +7,8 @@ from matplotlib import pyplot as plt
 from scipy import interpolate
 from scipy.optimize import fsolve
 
+import plotter as plotter
+
 
 def f_pos_ocv(sto):
     """
@@ -78,12 +80,15 @@ def esoh_to_voc(x100, y100, Cn, Cp, q):
     """
 
     # Map full cell capacity to pos. (y) and neg. (x) stoichiometries
-    y = y100 + (np.max(q) - q) / Cp
-    x = x100 - (np.max(q) - q) / Cn
+    # y = y100 + (np.max(q) - q) / Cp
+    # x = x100 - (np.max(q) - q) / Cn
+
+    x0 = x100 - np.max(q)/Cn
+    y0 = y100 + np.max(q)/Cp
 
     # Alternate method if x0 and y0 are given
-    # y = y0 - q / Cp
-    # x = x0 + q / Cn
+    y = y0 - q / Cp
+    x = x0 + q / Cn
 
     # Calculate the full cell open circuit potential
     Voc = f_pos_ocv(y) - f_neg_ocv(x)
@@ -196,22 +201,25 @@ def make_plot(q, Voc, Up, Un):
     Un:  negative electrode equilibrium potential
     """
 
-    plt.figure(figsize=(6, 6))
+    plotter.initialize(plt)
 
-    plt.subplot(211)
-    plt.plot(q, Voc)
-    plt.plot(q, Up)
-    plt.plot(q, Un)
-    plt.ylim((0, 5))
-    plt.xlabel('Capacity (Ah)')
-    plt.ylabel('Voltage (V)')
-    plt.yticks([0, 0.2, 0.5, 1.0, 2.0, 3.0, 3.5, 4.0, 4.2, 4.4])
-    plt.grid(axis='y', c=(0.9, 0.9, 0.9))
+    plt.figure(figsize=(12, 8))
 
-    plt.subplot(212)
-    plt.plot(q, np.gradient(Voc)/np.gradient(q)*np.max(q))
-    plt.plot(q, np.gradient(Up)/np.gradient(q)*np.max(q))
-    plt.plot(q, -np.gradient(Un)/np.gradient(q)*np.max(q))
-    plt.xlabel('Capacity (Ah)')
-    plt.ylabel('dV/dQ (V/Ah)')
-    plt.ylim((0, 2.5))
+    ax1 = plt.subplot(211)
+    ax1.plot(q, Voc, 'k')
+    ax1.plot(q, Up, 'b')
+    ax1.plot(q, Un, 'r')
+    ax1.hlines(y=4.2, xmin=0, xmax=np.max(q), color='k', linewidth=1)
+    ax1.set_ylim((0, 5))
+    ax1.set_ylabel('Voltage (V)')
+    ax1.set_yticks([0, 1, 3, 4.2])
+    ax1.grid(False)
+
+    ax2 = plt.subplot(212)
+    ax2.plot(q, np.gradient(Voc)/np.gradient(q)*np.max(q), 'k')
+    ax2.plot(q, np.gradient(Up)/np.gradient(q)*np.max(q), 'b')
+    ax2.plot(q, -np.gradient(Un)/np.gradient(q)*np.max(q), 'r')
+    ax2.set_xlabel('Capacity (Ah)')
+    ax2.set_ylabel('$Q_0$|dV/dQ| (V)')
+    ax2.set_ylim((0, 2.5))
+    ax2.grid(False)
