@@ -106,6 +106,10 @@ def get_label_registry():
     label_registry[f'esoh_c3_y100'] = (f'$y_{{100}}$', (None, None))
     label_registry[f'esoh_c3_x0'] = (f'$x_{{0}}$', (None, None))
     label_registry[f'esoh_c3_x100'] = (f'$x_{{100}}$', (None, None))
+    label_registry[f'esoh_c3_Cli'] = (f'$Q_{{\\mathrm{{Li}}}}$, (Ah)', (None, None))
+    label_registry[f'esoh_c3_Cp'] = (f'$Q_p$ (Ah)', (None, None))
+    label_registry[f'esoh_c3_Cn'] = (f'$Q_n$ (Ah)', (None, None))
+    label_registry[f'esoh_c3_npr'] = (f'$\\mathrm{{NPR}}$ (Ah)', (None, None))
 
 
     for idx in cycle_target_list[1::]:
@@ -120,7 +124,6 @@ def get_label_registry():
     label_registry['thickness_mm'] = ('Thickness (mm)', (None, None))
     label_registry['initial_capacity'] = ('Initial Capacity (Ah)', (None, None))
     label_registry['c20_dch_cap_at_c3_ah'] = ('Initial C/20 Capacity (Ah)', (None, None))
-    label_registry['esoh_c3_Cn'] = ('$C_n$, c3 (Ah)', (1.9, 3.0))
     label_registry['esoh_c56_Cn'] = ('$C_n$, c56 (Ah)', (1.9, 3.0))
     label_registry['esoh_c159_Cn'] = ('$C_n$, c159 (Ah)', (1.9, 3.0))
     label_registry['esoh_c262_Cn'] = ('$C_n$, c262 (Ah)', (1.9, 3.0))
