@@ -5,6 +5,7 @@
 __pycache__/
 *__init__
 *.m~
+venv/
 Icon
 from-suhak
 from-peyman
