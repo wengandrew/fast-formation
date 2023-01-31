@@ -54,8 +54,8 @@ class VasHelper:
         Retrieve the test records for a given device name.
         
         Returns:
-          - 'cycler_list' : from cycler
-          - 'aux_list'    : aux data
+          - 'cycler_list' : from cycler; a test_record object
+          - 'aux_list'    : aux data; a test_record object
         """
                 
         cycler_list = []
@@ -110,6 +110,10 @@ class VasHelper:
         """
         Return a Pandas DataFrame from a file containing 'aux'iliary data, which includes
         the LDC expansion sensor data, temperature sensor data, and others.
+        
+        Parameters
+        ---------
+        test_name (str): the name of a test
         """
 
         test_record = self._get_test_record(test_name)
@@ -130,6 +134,7 @@ class VasHelper:
                                        .dt.tz_localize('UTC')\
                                        .dt.tz_convert('US/Eastern')
 
+        # Standardize column names
         df = df.rename(columns={'h_test_time':'test_time'})
         df = df.rename(columns={'h_datapoint_datetime':'datetime'})
         df = df.rename(columns={'aux_vdf_temperature_celsius_0':'temperature'})
@@ -147,6 +152,10 @@ class VasHelper:
         """
         Returns a single DataFrame holding the AuxData for a device,
         stitched together and sorted by time
+        
+        Parameters
+        ---------
+        device_name (str): the name of a device
         """
         
         _, aux_list = self.get_test_records_for_device(device_name)
