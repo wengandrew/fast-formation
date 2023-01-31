@@ -49,13 +49,14 @@ class VasHelper:
         return device_list
     
     
-    def get_test_records_for_device(self, device_name):
+    
+    def get_test_names(self, device_name):
         """
-        Retrieve the test records for a given device name.
+        Retrieve the test names for a given device.
         
         Returns:
-          - 'cycler_list' : from cycler; a test_record object
-          - 'aux_list'    : aux data; a test_record object
+          - 'cycler_list' : from cycler ([str])
+          - 'aux_list'    : aux data ([str])
         """
                 
         cycler_list = []
@@ -66,9 +67,9 @@ class VasHelper:
             if device_name in test_record.name:
 
                 if 'AuxDat' in test_record.name:
-                    cycler_list.append(test_record)
+                    aux_list.append(test_record.name)
                 else:
-                    aux_list.append(test_record)
+                    cycler_list.append(test_record.name)
 
         return cycler_list, aux_list
     
@@ -86,7 +87,11 @@ class VasHelper:
                               'h_current', 
                               'h_potential', 
                               'h_step_index',
-                              'h_step_time')
+                              'h_step_time',
+                              'h_charge_capacity',
+                              'h_charge_energy',
+                              'h_discharge_capacity',
+                              'h_discharge_energy')
         reader.add_info_keys('i_cycle_num')
 
         df = reader.read_pandas()
@@ -94,13 +99,18 @@ class VasHelper:
                                        .dt.tz_localize('UTC')\
                                        .dt.tz_convert('US/Eastern')
 
-        df = df.rename(columns={'h_current':'current'})
-        df = df.rename(columns={'h_step_time':'step_time'})
-        df = df.rename(columns={'h_test_time':'test_time'})
+        df = df.rename(columns={'h_current':'current_a'})
+        df = df.rename(columns={'h_step_time':'step_time_s'})
+        df = df.rename(columns={'h_test_time':'test_time_s'})
         df = df.rename(columns={'h_step_index':'step_index'})
         df = df.rename(columns={'h_datapoint_datetime':'datetime'})
         df = df.rename(columns={'i_cycle_num':'cycle_index'})
-        df = df.rename(columns={'h_potential':'voltage'})
+        df = df.rename(columns={'h_potential':'voltage_v'})
+        df = df.rename(columns={'h_charge_capacity':'charge_capacity_ah'})
+        df = df.rename(columns={'h_charge_energy':'charge_energy_wh'})
+        df = df.rename(columns={'h_discharge_capacity':'discharge_capacity_ah'})
+        df = df.rename(columns={'h_discharge_energy':'discharge_energy_wh'})
+
         df = df.drop(columns=['h_datapoint_time'])
 
         return df
@@ -135,10 +145,10 @@ class VasHelper:
                                        .dt.tz_convert('US/Eastern')
 
         # Standardize column names
-        df = df.rename(columns={'h_test_time':'test_time'})
+        df = df.rename(columns={'h_test_time':'test_time_s'})
         df = df.rename(columns={'h_datapoint_datetime':'datetime'})
-        df = df.rename(columns={'aux_vdf_temperature_celsius_0':'temperature'})
-        df = df.rename(columns={'aux_vdf_ambienttemperature_celsius_0':'temperature_amb'})
+        df = df.rename(columns={'aux_vdf_temperature_celsius_0':'temperature_c'})
+        df = df.rename(columns={'aux_vdf_ambienttemperature_celsius_0':'temperature_amb_c'})
         df = df.rename(columns={'aux_vdf_ldcsensor_none_0':'ldc'})
         df = df.rename(columns={'aux_vdf_ldcref_none_0':'ldc_ref'})
         df = df.drop(columns=['h_datapoint_time'])
