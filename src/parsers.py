@@ -212,13 +212,19 @@ class CyclingDataParser:
             this_rpt['time_s'] = this_rpt['test_time_s'] - this_rpt['test_time_s'].iloc[0]
 
             # Extract the charge and discharge C/20 curves
-            c20_charge_capacity_ah = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_C20_CHARGE]['charge_capacity_ah']
-            c20_charge_voltage_v   = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_C20_CHARGE]['voltage_v']
-            c20_discharge_capacity_ah = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_C20_DISCHARGE]['discharge_capacity_ah']
-            c20_discharge_voltage_v   = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_C20_DISCHARGE]['voltage_v']
+            c20_charge_capacity_ah = this_rpt[this_rpt['step_index'] == \
+                                              RPT_STEP_INDEX_C20_CHARGE]['charge_capacity_ah']
+            c20_charge_voltage_v   = this_rpt[this_rpt['step_index'] == \
+                                              RPT_STEP_INDEX_C20_CHARGE]['voltage_v']
+            c20_discharge_capacity_ah = this_rpt[this_rpt['step_index'] == \
+                                                 RPT_STEP_INDEX_C20_DISCHARGE]['discharge_capacity_ah']
+            c20_discharge_voltage_v   = this_rpt[this_rpt['step_index'] == \
+                                                 RPT_STEP_INDEX_C20_DISCHARGE]['voltage_v']
 
-            voltage_decay_at_top = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR]['voltage_v']
-            voltage_decay_at_bot = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR]['voltage_v']
+            voltage_decay_at_top = this_rpt[this_rpt['step_index'] == \
+                                            RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR]['voltage_v']
+            voltage_decay_at_bot = this_rpt[this_rpt['step_index'] == \
+                                            RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR]['voltage_v']
 
             # Calculate the filtered dV/dQ outputs
             window_length = 101
@@ -245,13 +251,16 @@ class CyclingDataParser:
             this_dvdq_data['chg_v'] = Vf_c
             this_dvdq_data['chg_dvdq'] = dVdQ_c
 
-            throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()[self.df_agg.index == rpt_start_cycle].values[0])
+            throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()\
+                                      [self.df_agg.index == rpt_start_cycle].values[0])
             dvdq_data_list.append(this_dvdq_data)
             c20_discharge_capacity_ah_list.append(c20_discharge_capacity_ah.max())
             c20_charge_capacity_ah_list.append(c20_charge_capacity_ah.max())
             cycle_index_list.append(rpt_start_cycle)
-            voltage_decay_at_top_list.append(voltage_decay_at_top.tail(1).item() - voltage_decay_at_top.head(1).item())
-            voltage_decay_at_bot_list.append(voltage_decay_at_bot.tail(1).item() - voltage_decay_at_bot.head(1).item())
+            voltage_decay_at_top_list.append(voltage_decay_at_top.tail(1).item() - \
+                                             voltage_decay_at_top.head(1).item())
+            voltage_decay_at_bot_list.append(voltage_decay_at_bot.tail(1).item() - \
+                                             voltage_decay_at_bot.head(1).item())
 
             
         # Assemble the final DataFrame from the lists
@@ -298,7 +307,8 @@ class CyclingDataParser:
             this_rpt = this_rpt[this_rpt['cycle_index'] <= hppc_start_cycle + 80]
 
             # ...then trim
-            hppc_end_cycle  = this_rpt[this_rpt['step_index'] == RPT_STEP_INDEX_END_OF_HPPC]['cycle_index'].iloc[0]
+            hppc_end_cycle  = this_rpt[this_rpt['step_index'] == \
+                                       RPT_STEP_INDEX_END_OF_HPPC]['cycle_index'].iloc[0]
             this_rpt = this_rpt[this_rpt['cycle_index'] <= hppc_end_cycle]
 
             # Reset the capacity counter for each RPT; use this to convert to SOC later
@@ -315,8 +325,10 @@ class CyclingDataParser:
                 if df_dch_pulse.empty:
                     R_dch = np.NaN
                 else:
-                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_dch_pulse.index[0]-5, df_dch_pulse.index[0])].median()
-                    V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, df_dch_pulse['step_time_s'], df_dch_pulse['voltage_v'])
+                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_dch_pulse.index[0] - \
+                                                                5, df_dch_pulse.index[0])].median()
+                    V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, \
+                                   df_dch_pulse['step_time_s'], df_dch_pulse['voltage_v'])
                     I = df_dch_pulse['current_a'].median()
                     R_dch = (V1 - V0)/I
 
@@ -325,8 +337,10 @@ class CyclingDataParser:
                 if df_chg_pulse.empty:
                     R_chg = np.NaN
                 else:
-                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_chg_pulse.index[0]-5, df_chg_pulse.index[0])].median()
-                    V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, df_chg_pulse['step_time_s'], df_chg_pulse['voltage_v'])
+                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_chg_pulse.index[0] - \
+                                                                5, df_chg_pulse.index[0])].median()
+                    V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, \
+                                   df_chg_pulse['step_time_s'], df_chg_pulse['voltage_v'])
                     I = df_chg_pulse['current_a'].median()
                     R_chg = (V1 - V0)/I
 
@@ -334,11 +348,13 @@ class CyclingDataParser:
                 resistance_charge_list.append(R_chg)
                 cycle_index_list.append(rpt_start_cycle)
                 capacity_ah_list.append(capacity_ah_counter)
-                throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()[self.df_agg.index == rpt_start_cycle].values[0])
+                throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()\
+                                          [self.df_agg.index == rpt_start_cycle].values[0])
 
                 # Update the amp-hours moved
                 df_chg_up = curr_hppc[curr_hppc['step_index'] == HPPC_STEP_INDEX_CHARGE_UP]
-                capacity_ah_counter += df_chg_up['charge_capacity_ah'].max() - df_chg_up['charge_capacity_ah'].min()
+                capacity_ah_counter += df_chg_up['charge_capacity_ah'].max() - \
+                                       df_chg_up['charge_capacity_ah'].min()
 
 
         # Package the lists as a DataFrame
