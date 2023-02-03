@@ -38,6 +38,17 @@ HPPC_STEP_INDEX_CHARGE_UP              = 19
 HPPC_STEP_INDEX_CHARGE_UP_REST         = 13
 HPPC_PULSE_DURATION_TARGET_S           = 10
 
+"""
+The standard RPT sequence can be embedded into different test protocols.
+Each test protocol will follow the same sequence of step (indices) for the RPT
+sequence which will include an HPPC section and a C/20 discharge-charge section.
+
+However, what comes before and after the RPT block in each schedule could vary,
+which will introduce an offset in the step indices. In order to propely index
+into the right steps then, we can define a step index offset for each test type.
+"""
+FORM_BASE_RPT_STEP_INDEX_OFFS = -2
+
 
 class CyclingDataParser:
     
@@ -183,17 +194,35 @@ class CyclingDataParser:
                 
         return rpt_start_cycle_list
     
+    
+
+class RptDataParser:
+    
+    def __init__(self, df_rpt):
+        """
+        Input a DataFrame to construct this object. 
+        The DataFrame is usually a subset of another DataFrame from another test.
         
-    def get_rpt_info(self):
+        The DataFrame is built using vas.VasHelper.get_cycle_data
+        
+        """
+        
+        self.df = df_rpt
+        
+        
+    def get_rpt_info(self, rpt_start_cycle_list, offs=0):
         """
         Return a DataFrame containing summarized info from the RPT.
         
         Includes processing C/20 charge and discharge curves for dV/dQ analysis
         
         Excludes HPPC parsing; that is handled elsewhere.
-        """
         
-        rpt_start_cycle_list = self.get_rpt_start_cycles()
+        Parameters
+        ----------
+        rpt_start_cycle_list (list(int)) : list of cycle indices corresponding to RPTs
+        offs (int): step index offset
+        """
                 
         # Compile information at each RPT
         cycle_index_list = []
@@ -207,24 +236,24 @@ class CyclingDataParser:
         for rpt_start_cycle in rpt_start_cycle_list:
 
             # Create a DataFrame to hold the current RPT data only
-            this_rpt = self.df_rpt[(self.df_rpt['cycle_index'] >= rpt_start_cycle)]
+            this_rpt = self.df[(self.df['cycle_index'] >= rpt_start_cycle)]
             this_rpt = this_rpt[this_rpt['cycle_index'] <= rpt_start_cycle + 80]
             this_rpt['time_s'] = this_rpt['test_time_s'] - this_rpt['test_time_s'].iloc[0]
 
             # Extract the charge and discharge C/20 curves
             c20_charge_capacity_ah = this_rpt[this_rpt['step_index'] == \
-                                              RPT_STEP_INDEX_C20_CHARGE]['charge_capacity_ah']
+                                              RPT_STEP_INDEX_C20_CHARGE + offs]['charge_capacity_ah']
             c20_charge_voltage_v   = this_rpt[this_rpt['step_index'] == \
-                                              RPT_STEP_INDEX_C20_CHARGE]['voltage_v']
+                                              RPT_STEP_INDEX_C20_CHARGE + offs]['voltage_v']
             c20_discharge_capacity_ah = this_rpt[this_rpt['step_index'] == \
-                                                 RPT_STEP_INDEX_C20_DISCHARGE]['discharge_capacity_ah']
+                                                 RPT_STEP_INDEX_C20_DISCHARGE + offs]['discharge_capacity_ah']
             c20_discharge_voltage_v   = this_rpt[this_rpt['step_index'] == \
-                                                 RPT_STEP_INDEX_C20_DISCHARGE]['voltage_v']
+                                                 RPT_STEP_INDEX_C20_DISCHARGE + offs]['voltage_v']
 
             voltage_decay_at_top = this_rpt[this_rpt['step_index'] == \
-                                            RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR]['voltage_v']
+                                            RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR + offs]['voltage_v']
             voltage_decay_at_bot = this_rpt[this_rpt['step_index'] == \
-                                            RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR]['voltage_v']
+                                            RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR + offs]['voltage_v']
 
             # Calculate the filtered dV/dQ outputs
             window_length = 101
@@ -251,8 +280,6 @@ class CyclingDataParser:
             this_dvdq_data['chg_v'] = Vf_c
             this_dvdq_data['chg_dvdq'] = dVdQ_c
 
-            throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()\
-                                      [self.df_agg.index == rpt_start_cycle].values[0])
             dvdq_data_list.append(this_dvdq_data)
             c20_discharge_capacity_ah_list.append(c20_discharge_capacity_ah.max())
             c20_charge_capacity_ah_list.append(c20_charge_capacity_ah.max())
@@ -265,13 +292,11 @@ class CyclingDataParser:
             
         # Assemble the final DataFrame from the lists
         df_by_rpt = pd.DataFrame(list(zip(cycle_index_list, 
-                                          throughput_ah_list, 
                                           c20_discharge_capacity_ah_list, 
                                           c20_charge_capacity_ah_list,
                                           voltage_decay_at_top_list,
                                           voltage_decay_at_bot_list,
                                           dvdq_data_list)), columns=['cycle_index', 
-                                                                     'tot_discharge_capacity_ah',
                                                                      'c20_discharge_capacity_ah',
                                                                      'c20_charge_capacity_ah',
                                                                      'deltav_4p2v_12hr',
@@ -283,13 +308,16 @@ class CyclingDataParser:
         
         
         
-    def get_hppc_info(self):
+    def get_hppc_info(self, rpt_start_cycle_list, offs=0):
         """
         Return a DataFrame containing HPPC info extracted from the RPT
+        
+        Parameters
+        ----------
+        rpt_start_cycle_list (list(int)) : list of cycle indices corresponding to RPTs
+        offs (int): step index offset
         """
-        
-        rpt_start_cycle_list = self.get_rpt_start_cycles()
-        
+                
         resistance_charge_list = []
         resistance_discharge_list = []
         cycle_index_list = []
@@ -301,7 +329,7 @@ class CyclingDataParser:
             hppc_start_cycle = rpt_start_cycle + 1
             
             # Create a DataFrame to hold the current HPPC data only
-            this_rpt = self.df_rpt[(self.df_rpt['cycle_index'] >= hppc_start_cycle)]
+            this_rpt = self.df[(self.df['cycle_index'] >= hppc_start_cycle)]
 
             # First overshoot a bit...
             this_rpt = this_rpt[this_rpt['cycle_index'] <= hppc_start_cycle + 80]
@@ -325,7 +353,7 @@ class CyclingDataParser:
                 if df_dch_pulse.empty:
                     R_dch = np.NaN
                 else:
-                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_dch_pulse.index[0] - \
+                    V0 = self.df['voltage_v'].loc[np.arange(df_dch_pulse.index[0] - \
                                                                 5, df_dch_pulse.index[0])].median()
                     V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, \
                                    df_dch_pulse['step_time_s'], df_dch_pulse['voltage_v'])
@@ -337,7 +365,7 @@ class CyclingDataParser:
                 if df_chg_pulse.empty:
                     R_chg = np.NaN
                 else:
-                    V0 = self.df_rpt['voltage_v'].loc[np.arange(df_chg_pulse.index[0] - \
+                    V0 = self.df['voltage_v'].loc[np.arange(df_chg_pulse.index[0] - \
                                                                 5, df_chg_pulse.index[0])].median()
                     V1 = np.interp(HPPC_PULSE_DURATION_TARGET_S, \
                                    df_chg_pulse['step_time_s'], df_chg_pulse['voltage_v'])
@@ -348,8 +376,6 @@ class CyclingDataParser:
                 resistance_charge_list.append(R_chg)
                 cycle_index_list.append(rpt_start_cycle)
                 capacity_ah_list.append(capacity_ah_counter)
-                throughput_ah_list.append(self.df_agg['discharge_capacity_ah'].cumsum()\
-                                          [self.df_agg.index == rpt_start_cycle].values[0])
 
                 # Update the amp-hours moved
                 df_chg_up = curr_hppc[curr_hppc['step_index'] == HPPC_STEP_INDEX_CHARGE_UP]
@@ -359,11 +385,9 @@ class CyclingDataParser:
 
         # Package the lists as a DataFrame
         df_hppc = pd.DataFrame(list(zip(cycle_index_list,
-                              throughput_ah_list,
                               resistance_discharge_list,
                               resistance_charge_list,
                               capacity_ah_list)), columns=['cycle_index', 
-                                                            'throughput_ah',
                                                             'resistance_discharge_ohms',
                                                             'resistance_charge_ohms',
                                                             'capacity_ah'])
