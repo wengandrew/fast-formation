@@ -18,7 +18,7 @@ CYC_STEP_INDEX_CHARGE_REST    = 5
 CYC_STEP_INDEX_DISCHARGE_CC   = 6
 CYC_STEP_INDEX_DISCHARGE_REST = 7
 
-RPT_STEP_INDEX_START          = 12
+RPT_STEP_INDEX_START          = 12 # long rest step before first HPPC pulse discharge
 RPT_STEP_INDEX_END            = 31
 RPT_STEP_INDEX_C20_CHARGE     = 26
 RPT_STEP_INDEX_C20_DISCHARGE  = 23
@@ -49,10 +49,9 @@ into the right steps then, we can define a step index offset for each test type.
 """
 FORM_BASE_RPT_STEP_INDEX_OFFS = -2
 
-
 class CyclingDataParser:
     
-    def __init__(self, device_name, vas_helper):
+    def __init__(self, device_name, vas_helper, key='CYC', offs=0):
         """
         Use VAS to initialize a parser object
         """
@@ -62,7 +61,7 @@ class CyclingDataParser:
         cycle_test_list = []
         
         for test_name in test_list:
-            if 'CYC' in test_name:
+            if key in test_name:
                 cycle_test_list.append(test_name)
                 
         assert not len(cycle_test_list) == 0, 'No cycling test found.'
@@ -75,9 +74,9 @@ class CyclingDataParser:
         print(f'Working on "{cycle_test_name}"...')
         
         self.df = vas_helper.get_cycler_data(cycle_test_name)
-        self.df_cyc = self.df[self.df['step_index'] < RPT_STEP_INDEX_START]
-        self.df_rpt = self.df[(self.df['step_index'] >= RPT_STEP_INDEX_START) & \
-                              (self.df['step_index'] <= RPT_STEP_INDEX_END)]       
+        self.df_cyc = self.df[self.df['step_index'] < RPT_STEP_INDEX_START + offs]
+        self.df_rpt = self.df[(self.df['step_index'] >= RPT_STEP_INDEX_START + offs) & \
+                              (self.df['step_index'] <= RPT_STEP_INDEX_END + offs)]       
         
         self.df_agg = self.df.groupby('cycle_index').agg('max')
         
@@ -175,25 +174,6 @@ class CyclingDataParser:
 
         return df_by_cyc
         
-
-    def get_rpt_start_cycles(self):
-        """
-        Returns a list of cycle indices corresponding to RPT starts
-        """
-    
-        rpt_start_cycle_list = []
-
-        unique_cycles = self.df['cycle_index'].unique()
-
-        for cycle in unique_cycles:
-
-            this_df = self.df[self.df['cycle_index'] == cycle]
-
-            if this_df['step_index'].isin([RPT_STEP_INDEX_START]).any():
-                rpt_start_cycle_list.append(cycle)
-                
-        return rpt_start_cycle_list
-    
     
 
 class RptDataParser:
@@ -210,6 +190,30 @@ class RptDataParser:
         self.df = df_rpt
         
         
+    def get_rpt_start_cycles(self, offs):
+        """
+        Returns a list of cycle indices corresponding to RPT starts
+        
+        Parameters
+        ----------
+        offs (int): step index offset (schedule file specific)
+        """
+    
+        rpt_start_cycle_list = []
+
+        unique_cycles = self.df['cycle_index'].unique()
+
+        for cycle in unique_cycles:
+
+            this_df = self.df[self.df['cycle_index'] == cycle]
+
+            if this_df['step_index'].isin([RPT_STEP_INDEX_START + offs]).any():
+                rpt_start_cycle_list.append(cycle)
+                
+        return rpt_start_cycle_list
+        
+        
+        
     def get_rpt_info(self, rpt_start_cycle_list, offs=0):
         """
         Return a DataFrame containing summarized info from the RPT.
@@ -221,7 +225,7 @@ class RptDataParser:
         Parameters
         ----------
         rpt_start_cycle_list (list(int)) : list of cycle indices corresponding to RPTs
-        offs (int): step index offset
+        offs (int): step index offset (schedule file specific)
         """
                 
         # Compile information at each RPT
@@ -237,23 +241,23 @@ class RptDataParser:
 
             # Create a DataFrame to hold the current RPT data only
             this_rpt = self.df[(self.df['cycle_index'] >= rpt_start_cycle)]
-            this_rpt = this_rpt[this_rpt['cycle_index'] <= rpt_start_cycle + 80]
+            this_rpt = this_rpt[this_rpt['cycle_index'] <= rpt_start_cycle + 33]
             this_rpt['time_s'] = this_rpt['test_time_s'] - this_rpt['test_time_s'].iloc[0]
 
             # Extract the charge and discharge C/20 curves
             c20_charge_capacity_ah = this_rpt[this_rpt['step_index'] == \
-                                              RPT_STEP_INDEX_C20_CHARGE + offs]['charge_capacity_ah']
+                                RPT_STEP_INDEX_C20_CHARGE + offs]['charge_capacity_ah']
             c20_charge_voltage_v   = this_rpt[this_rpt['step_index'] == \
-                                              RPT_STEP_INDEX_C20_CHARGE + offs]['voltage_v']
+                                RPT_STEP_INDEX_C20_CHARGE + offs]['voltage_v']
             c20_discharge_capacity_ah = this_rpt[this_rpt['step_index'] == \
-                                                 RPT_STEP_INDEX_C20_DISCHARGE + offs]['discharge_capacity_ah']
+                                RPT_STEP_INDEX_C20_DISCHARGE + offs]['discharge_capacity_ah']
             c20_discharge_voltage_v   = this_rpt[this_rpt['step_index'] == \
-                                                 RPT_STEP_INDEX_C20_DISCHARGE + offs]['voltage_v']
+                                RPT_STEP_INDEX_C20_DISCHARGE + offs]['voltage_v']
 
             voltage_decay_at_top = this_rpt[this_rpt['step_index'] == \
-                                            RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR + offs]['voltage_v']
+                                RPT_STEP_INDEX_VOLTAGE_RELAX_TOP_12HR + offs]['voltage_v']
             voltage_decay_at_bot = this_rpt[this_rpt['step_index'] == \
-                                            RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR + offs]['voltage_v']
+                                RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR + offs]['voltage_v']
 
             # Calculate the filtered dV/dQ outputs
             window_length = 101
@@ -315,7 +319,7 @@ class RptDataParser:
         Parameters
         ----------
         rpt_start_cycle_list (list(int)) : list of cycle indices corresponding to RPTs
-        offs (int): step index offset
+        offs (int): step index offset (schedule file specific)
         """
                 
         resistance_charge_list = []
@@ -336,7 +340,7 @@ class RptDataParser:
 
             # ...then trim
             hppc_end_cycle  = this_rpt[this_rpt['step_index'] == \
-                                       RPT_STEP_INDEX_END_OF_HPPC]['cycle_index'].iloc[0]
+                                       RPT_STEP_INDEX_END_OF_HPPC + offs]['cycle_index'].iloc[0]
             this_rpt = this_rpt[this_rpt['cycle_index'] <= hppc_end_cycle]
 
             # Reset the capacity counter for each RPT; use this to convert to SOC later
@@ -349,7 +353,8 @@ class RptDataParser:
                 curr_hppc['time_s'] = curr_hppc['test_time_s'] - curr_hppc['test_time_s'].iloc[0]
 
                 # Process the discharge pulse
-                df_dch_pulse = curr_hppc[curr_hppc['step_index'] == HPPC_STEP_INDEX_PULSE_DISCHARGE]
+                df_dch_pulse = curr_hppc[curr_hppc['step_index'] == \
+                                         HPPC_STEP_INDEX_PULSE_DISCHARGE + offs]
                 if df_dch_pulse.empty:
                     R_dch = np.NaN
                 else:
@@ -361,7 +366,8 @@ class RptDataParser:
                     R_dch = (V1 - V0)/I
 
                 # Process the charge pulse
-                df_chg_pulse = curr_hppc[curr_hppc['step_index'] == HPPC_STEP_INDEX_PULSE_CHARGE]
+                df_chg_pulse = curr_hppc[curr_hppc['step_index'] == \
+                                         HPPC_STEP_INDEX_PULSE_CHARGE + offs]
                 if df_chg_pulse.empty:
                     R_chg = np.NaN
                 else:
@@ -378,7 +384,8 @@ class RptDataParser:
                 capacity_ah_list.append(capacity_ah_counter)
 
                 # Update the amp-hours moved
-                df_chg_up = curr_hppc[curr_hppc['step_index'] == HPPC_STEP_INDEX_CHARGE_UP]
+                df_chg_up = curr_hppc[curr_hppc['step_index'] == \
+                                      HPPC_STEP_INDEX_CHARGE_UP + offs]
                 capacity_ah_counter += df_chg_up['charge_capacity_ah'].max() - \
                                        df_chg_up['charge_capacity_ah'].min()
 
