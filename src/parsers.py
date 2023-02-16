@@ -259,6 +259,9 @@ class RptDataParser:
             voltage_decay_at_bot = this_rpt[this_rpt['step_index'] == \
                                 RPT_STEP_INDEX_VOLTAGE_RELAX_BOT_2P5HR + offs]['voltage_v']
 
+            if len(c20_charge_capacity_ah) == 0:
+                continue
+                
             # Calculate the filtered dV/dQ outputs
             window_length = 101
             polyorder = 2
