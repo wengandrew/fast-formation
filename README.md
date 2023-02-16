@@ -2,7 +2,7 @@
 
 Andrew Weng
 
-This respository contains source code and analysis notebooks for a study on the impact of fast battery formation protocols on battery lifetime. The dataset of 40 pouch cells built, formed, and cycled at University of Michigan Battery Lab.
+A collection of source code, data, and analysis notebooks for studying the impact of fast formation protocols on battery lifetime.
 
 ## Python: Getting Started
 
