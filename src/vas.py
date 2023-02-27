@@ -131,16 +131,17 @@ class VasHelper:
         reader = test_record.make_time_series_reader()
 
         reader.add_trace_keys('h_test_time',
-                              'h_datapoint_time',
                               'aux_vdf_ldcref_none_0',
                               'aux_vdf_ambientrh_percent_0',
                               'aux_vdf_ldcsensor_none_0',
                               'aux_vdf_temperature_celsius_0',
-                              'aux_vdf_ambienttemperature_celsius_0'
+                              'aux_vdf_ambienttemperature_celsius_0',
+                              'aux_vdf_timestamp_datetime_0',
+                              'aux_vdf_current_amp_0'
                               )
 
         df = reader.read_pandas()
-        df['h_datapoint_datetime'] = pd.to_datetime(df['h_datapoint_time'], unit='ms')\
+        df['h_datapoint_datetime'] = pd.to_datetime(df['aux_vdf_timestamp_datetime_0'], unit='ms')\
                                        .dt.tz_localize('UTC')\
                                        .dt.tz_convert('US/Eastern')
 
@@ -151,7 +152,7 @@ class VasHelper:
         df = df.rename(columns={'aux_vdf_ambienttemperature_celsius_0':'temperature_amb_c'})
         df = df.rename(columns={'aux_vdf_ldcsensor_none_0':'ldc'})
         df = df.rename(columns={'aux_vdf_ldcref_none_0':'ldc_ref'})
-        df = df.drop(columns=['h_datapoint_time'])
+        df = df.rename(columns={'aux_vdf_current_amp_0':'current_a'})
 
         # df['file_name'] = test_name
 
@@ -168,20 +169,20 @@ class VasHelper:
         device_name (str): the name of a device
         """
         
-        _, aux_list = self.get_test_records_for_device(device_name)
+        _, aux_list = self.get_test_names(device_name)
         
         df = pd.DataFrame()
         
         for test_record in aux_list:
             
-            print(f'Processing {test_record.name}')
+            print(f'Processing {test_record}')
             
-            df = pd.concat([df, self.get_aux_data(test_record.name)])
+            df = pd.concat([df, self.get_aux_data(test_record)])
             
             time.sleep(5)
             
         # Sort and trim values
-        df = df.sort_vaules(by=['datetime'])
+        df = df.sort_values(by=['datetime'])
         df = df[df['datetime'].between('2020', '2040')]
                               
         return df
